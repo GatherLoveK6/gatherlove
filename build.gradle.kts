@@ -1,7 +1,9 @@
 plugins {
     java
+    jacoco
     id("org.springframework.boot") version "3.4.4"
     id("io.spring.dependency-management") version "1.1.7"
+    id("org.sonarqube") version "6.0.1.5171"
 }
 
 group = "k6"
@@ -36,4 +38,23 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+tasks.test {
+    filter {
+        excludeTestsMatching("*FunctionalTest") // Exclude functional tests
+    }
+    finalizedBy(tasks.jacocoTestReport) // Ensure jacocoTestReport runs after test
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test) // Make sure jacocoTestReport runs after test
+}
+
+sonar {
+    properties {
+        property("sonar.projectKey", "GatherLoveK6_gatherlove")
+        property("sonar.organization", "gatherlovek6")
+        property("sonar.host.url", "https://sonarcloud.io")
+    }
 }
