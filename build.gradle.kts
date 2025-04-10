@@ -48,7 +48,10 @@ tasks.test {
 }
 
 tasks.jacocoTestReport {
-    dependsOn(tasks.test) // Make sure jacocoTestReport runs after test
+    dependsOn(tasks.test)
+    reports {
+        xml.required = true
+    }// Make sure jacocoTestReport runs after test
 }
 
 sonar {
