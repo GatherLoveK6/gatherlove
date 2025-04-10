@@ -50,17 +50,16 @@ jobs:
     steps:
       - name: Add SSH Key to Agent
         run: |
-          eval "$(ssh-agent -s)"
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > private_key.pem
           chmod 600 private_key.pem
+          eval "$(ssh-agent -s)"
           ssh-add private_key.pem
 
       - name: Deploy Application via SSH
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/spring-boot-app:latest
             docker stop spring-boot-app || true
             docker rm spring-boot-app || true
             docker run -d --name spring-boot-app -p 8080:8080 ${{ secrets.DOCKER_HUB_USERNAME }}/spring-boot-app:latest
           EOF
-
