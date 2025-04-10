@@ -53,10 +53,7 @@ jobs:
           eval "$(ssh-agent -s)"
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > private_key.pem
           chmod 600 private_key.pem
-          SSH_ASKPASS_SCRIPT=$(mktemp)
-          echo 'echo "${{ secrets.EC2_SSH_PASSWORD }}"' > $SSH_ASKPASS_SCRIPT
-          chmod +x $SSH_ASKPASS_SCRIPT
-          DISPLAY= ssh-add private_key.pem <<< "${{ secrets.EC2_SSH_PASSWORD }}"
+          ssh-add private_key.pem
 
       - name: Deploy Application via SSH
         run: |
