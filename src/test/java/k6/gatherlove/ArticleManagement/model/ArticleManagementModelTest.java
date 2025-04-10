@@ -5,10 +5,12 @@ import k6.gatherlove.user.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class ArticleModelTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class ArticleManagementModelTest {
 
     private User admin;
-    private Article article;
+    private ArticleManagementModel article;
 
     @BeforeEach
     void setUp() {
@@ -19,7 +21,7 @@ public class ArticleModelTest {
                 .role(Role.ADMIN)
                 .build();
 
-        article = Article.builder()
+        article = ArticleManagementModel.builder()
                 .id(101L)
                 .title("Transparency in Fundraising")
                 .content("This article explains how transparency is crucial.")
