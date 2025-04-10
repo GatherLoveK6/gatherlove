@@ -8,6 +8,11 @@ class GatherloveApplicationTests {
 
     @Test
     void contextLoads() {
+        // This test will pass if the application context starts successfully
     }
 
+    @Test
+    void mainMethodTest() {
+        GatherloveApplication.main(new String[]{});
+    }
 }
