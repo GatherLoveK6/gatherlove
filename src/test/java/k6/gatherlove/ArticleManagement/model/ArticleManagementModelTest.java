@@ -25,7 +25,7 @@ public class ArticleManagementModelTest {
                 .id(101L)
                 .title("Transparency in Fundraising")
                 .content("This article explains how transparency is crucial.")
-                .author(admin)
+                .authorName("adminUser")
                 .build();
     }
 
@@ -33,7 +33,7 @@ public class ArticleManagementModelTest {
     void testArticleFieldsInitialization() {
         assertEquals("Transparency in Fundraising", article.getTitle());
         assertEquals("This article explains how transparency is crucial.", article.getContent());
-        assertEquals(admin, article.getAuthor());
+        assertEquals("adminUser", article.getAuthorName());
     }
 
     @Test

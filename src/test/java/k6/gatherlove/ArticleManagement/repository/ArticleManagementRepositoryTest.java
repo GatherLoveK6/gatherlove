@@ -13,10 +13,10 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
-public class ArticleRepositoryTest {
+public class ArticleManagementRepositoryTest {
 
     @Autowired
-    private ArticleRepository articleRepository;
+    private ArticleManagementRepository articleRepository;
 
     private ArticleManagementModel article;
 
@@ -32,7 +32,7 @@ public class ArticleRepositoryTest {
         article = ArticleManagementModel.builder()
                 .title("Why Transparency Matters in Donations")
                 .content("Transparency builds trust and encourages recurring contributions.")
-                .author(admin)
+                .authorName("adminUser")
                 .build();
     }
 

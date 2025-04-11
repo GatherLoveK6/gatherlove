@@ -1,16 +1,21 @@
 package k6.gatherlove.ArticleManagement.model;
 
-import k6.gatherlove.user.User;
+import jakarta.persistence.*;
 import lombok.*;
 
+@Entity
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ArticleManagementModel {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String title;
     private String content;
-    private User author;
+    private String authorName;
+
 }
