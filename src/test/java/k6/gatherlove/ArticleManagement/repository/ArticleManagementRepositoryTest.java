@@ -32,7 +32,7 @@ public class ArticleManagementRepositoryTest {
         article = ArticleManagementModel.builder()
                 .title("Why Transparency Matters in Donations")
                 .content("Transparency builds trust and encourages recurring contributions.")
-                .authorName("adminUser")
+                .author("adminUser")
                 .build();
     }
 

@@ -9,6 +9,7 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class ArticleManagementModel {
 
     @Id
@@ -16,6 +17,6 @@ public class ArticleManagementModel {
     private Long id;
     private String title;
     private String content;
-    private String authorName;
+    private String author;
 
 }
