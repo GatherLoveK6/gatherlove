@@ -8,7 +8,10 @@ public class AdminAnnouncementServiceImpl implements AdminAnnouncementService {
 
     @Override
     public void sendAnnouncement(AnnouncementRequest request) {
-        // Mock logic — in real case, you'd push this to notification service or DB
+        logAnnouncement(request);
+    }
+
+    private void logAnnouncement(AnnouncementRequest request) {
         System.out.println("Sending announcement: " + request.getTitle() + " - " + request.getMessage());
     }
 }
