@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Register - GatherLove</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<h2>Register</h2>
+<form th:action="@{/auth/register}" method="post">
+    <label for="username">Username:</label>
+    <input type="text" name="username" id="username" required />
+
+    <label for="password">Password:</label>
+    <input type="password" name="password" id="password" required />
+
+    <label for="role">Role:</label>
+    <select name="role" id="role" required>
+        <option value="DONOR">Donor</option>
+        <option value="FUNDRAISER">Fundraiser</option>
+        <option value="ADMIN">Admin</option>
+    </select>
+
+    <button type="submit">Register</button>
+</form>
+
+<p>Already have an account? <a th:href="@{/auth/login}">Login here</a></p>
+</body>
+</html>
