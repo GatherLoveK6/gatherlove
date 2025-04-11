@@ -6,60 +6,49 @@ import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ReportTest {
+class ReportTest {
 
     @Test
-    void testSomething() {
-        Report r = new Report();
-        r.setCampaignId("abc");
-        r.setReportedBy("def");
-        r.setReason("ghi");
-        r.setEvidenceUrl("url");
-        r.setCreatedAt(LocalDateTime.now());
-        r.setVerified(true);
+    void testReportBuilderAndGetters() {
+        LocalDateTime now = LocalDateTime.now();
 
-        if (!r.getCampaignId().equals("abc")) {
-            fail("campaignId wrong");
-        }
-        if (!r.getReportedBy().equals("def")) {
-            fail("reportedBy wrong");
-        }
-        if (!r.getReason().equals("ghi")) {
-            fail("reason wrong");
-        }
-    }
-
-    @Test
-    void testBuilder() {
-        LocalDateTime t = LocalDateTime.of(2023, 1, 1, 1, 1);
-        Report x = Report.builder()
-                .campaignId("x")
-                .reportedBy("y")
-                .reason("z")
-                .evidenceUrl("e")
-                .createdAt(t)
+        Report report = Report.builder()
+                .campaignId("CAMP001")
+                .reportedBy("USER123")
+                .reason("Inappropriate content")
+                .evidenceUrl("https://example.com/image.png")
+                .createdAt(now)
                 .verified(false)
                 .build();
 
-        assertEquals("x", x.getCampaignId());
-        assertEquals("y", x.getReportedBy());
-        assertEquals("z", x.getReason());
-        assertEquals("e", x.getEvidenceUrl());
-        assertEquals(t, x.getCreatedAt());
-        assertFalse(x.isVerified());
+        assertNull(report.getId()); // ID should be null since not persisted yet
+        assertEquals("CAMP001", report.getCampaignId());
+        assertEquals("USER123", report.getReportedBy());
+        assertEquals("Inappropriate content", report.getReason());
+        assertEquals("https://example.com/image.png", report.getEvidenceUrl());
+        assertEquals(now, report.getCreatedAt());
+        assertFalse(report.isVerified());
     }
 
     @Test
-    void testStuff() {
-        Report r = new Report();
-        r.setId(10L);
-        r.setCampaignId("test");
-        r.setReportedBy("u");
-        r.setReason("bad");
-        r.setCreatedAt(LocalDateTime.now());
-        r.setVerified(false);
+    void testReportSetters() {
+        Report report = new Report();
+        LocalDateTime now = LocalDateTime.now();
 
-        assertTrue(r.getId() == 10);
-        assertNotNull(r.getCreatedAt());
+        report.setId(1L);
+        report.setCampaignId("CAMP002");
+        report.setReportedBy("USER456");
+        report.setReason("Spam");
+        report.setEvidenceUrl(null);
+        report.setCreatedAt(now);
+        report.setVerified(true);
+
+        assertEquals(1L, report.getId());
+        assertEquals("CAMP002", report.getCampaignId());
+        assertEquals("USER456", report.getReportedBy());
+        assertEquals("Spam", report.getReason());
+        assertNull(report.getEvidenceUrl());
+        assertEquals(now, report.getCreatedAt());
+        assertTrue(report.isVerified());
     }
 }
