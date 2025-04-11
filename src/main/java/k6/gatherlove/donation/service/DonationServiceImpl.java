@@ -16,9 +16,7 @@ public class DonationServiceImpl implements DonationService {
 
     @Override
     public Donation createDonation(double amount, String campaignId) {
-        if (amount > userBalance) {
-            throw new IllegalStateException("Insufficient balance to create donation!");
-        }
+        checkFunds(amount);
         userBalance -= amount;
         Donation donation = new Donation(amount, campaignId);
         donation.setConfirmed(true);
@@ -28,14 +26,13 @@ public class DonationServiceImpl implements DonationService {
 
     @Override
     public void cancelDonation(String donationId) {
-        Donation donation = donationRepository.findById(donationId);
-        if (donation == null) {
+        Donation d = donationRepository.findById(donationId);
+        if (d == null) {
             throw new IllegalArgumentException("Donation does not exist!");
         }
-        if (!donation.isCanceled()) {
-            donation.setCanceled(true);
-            userBalance += donation.getAmount();
-        }
+        if (d.isCanceled()) return;
+        d.setCanceled(true);
+        userBalance += d.getAmount();
     }
 
     @Override
@@ -51,5 +48,11 @@ public class DonationServiceImpl implements DonationService {
     @Override
     public double getUserBalance() {
         return userBalance;
+    }
+
+    private void checkFunds(double amount) {
+        if (amount > userBalance) {
+            throw new IllegalStateException("Insufficient balance to create donation!");
+        }
     }
 }
