@@ -1,7 +1,7 @@
 package k6.gatherlove.AdminDashboard.controller;
 
 import k6.gatherlove.AdminDashboard.service.AdminCampaignService;
-import k6.gatherlove.campaign.model.Campaign;
+import k6.gatherlove.AdminDashboard.dto.Campaign;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
