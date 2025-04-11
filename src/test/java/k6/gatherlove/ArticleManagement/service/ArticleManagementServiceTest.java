@@ -53,4 +53,32 @@ public class ArticleManagementServiceTest {
         List<ArticleManagementModel> list = articleService.getAllArticles();
         assertEquals(1, list.size());
     }
+
+    @Test
+    void testUpdateArticle() {
+        ArticleManagementModel updated = ArticleManagementModel.builder()
+                .title("Updated Title")
+                .content("Updated Content")
+                .author("adminUser")
+                .build();
+
+        when(articleRepository.findById(1L)).thenReturn(Optional.of(article));
+        when(articleRepository.save(any())).thenReturn(updated);
+
+        ArticleManagementModel result = articleService.updateArticle(1L, updated);
+
+        assertEquals("Updated Title", result.getTitle());
+        assertEquals("Updated Content", result.getContent());
+    }
+
+    @Test
+    void testDeleteArticle() {
+        doNothing().when(articleRepository).deleteById(1L);
+
+        // Just call the method; no exception should be thrown
+        assertDoesNotThrow(() -> articleService.deleteArticle(1L));
+
+        verify(articleRepository, times(1)).deleteById(1L);
+    }
+
 }
