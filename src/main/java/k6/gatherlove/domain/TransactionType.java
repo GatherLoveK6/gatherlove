@@ -4,3 +4,4 @@ public enum TransactionType {
     TOP_UP,
     WITHDRAW;
 }
+
