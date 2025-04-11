@@ -9,50 +9,44 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class ReportServiceFactoryTest {
+class ReportServiceFactoryTest {
 
-    private UserReportServiceImpl u;
-    private AdminReportServiceImpl a;
-    private ReportServiceFactory f;
+    private UserReportServiceImpl userReportServiceImpl;
+    private AdminReportServiceImpl adminReportActionImpl;
+    private ReportServiceFactory factory;
 
     @BeforeEach
-    void x() {
-        u = mock(UserReportServiceImpl.class);
-        a = mock(AdminReportServiceImpl.class);
-        f = new ReportServiceFactory(u, a);
+    void setUp() {
+        userReportServiceImpl = mock(UserReportServiceImpl.class);
+        adminReportActionImpl = mock(AdminReportServiceImpl.class);
+        factory = new ReportServiceFactory(userReportServiceImpl, adminReportActionImpl);
     }
 
     @Test
-    void user() {
-        assertSame(u, f.getReportAction("USER"));
+    void testGetReportActionForUser() {
+        ReportService result = factory.getReportAction("USER");
+        assertEquals(userReportServiceImpl, result);
     }
 
     @Test
-    void admin() {
-        ReportService r = f.getReportAction("ADMIN");
-        if (r != a) {
-            fail("not admin");
-        }
+    void testGetReportActionForAdmin() {
+        ReportService result = factory.getReportAction("ADMIN");
+        assertEquals(adminReportActionImpl, result);
     }
 
     @Test
-    void nullCase() {
-        try {
-            f.getReportAction(null);
-            fail();
-        } catch (Exception e) {
-
-        }
+    void testGetReportActionWithNullRole() {
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            factory.getReportAction(null);
+        });
+        assertTrue(exception.getMessage().contains("Role cannot be null"));
     }
 
     @Test
-    void unsupported() {
-        boolean exceptionThrown = false;
-        try {
-            f.getReportAction("MODERATOR");
-        } catch (IllegalArgumentException e) {
-            exceptionThrown = true;
-        }
-        assertTrue(exceptionThrown);
+    void testGetReportActionWithUnsupportedRole() {
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            factory.getReportAction("MODERATOR");
+        });
+        assertTrue(exception.getMessage().contains("Unsupported role"));
     }
 }
