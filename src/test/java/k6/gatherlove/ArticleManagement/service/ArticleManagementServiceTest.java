@@ -11,7 +11,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class ArticleServiceTest {
+public class ArticleManagementServiceTest {
 
     private ArticleManagementRepository articleRepository;
     private ArticleManagementService articleService;
