@@ -2,12 +2,20 @@ package k6.gatherlove.fundraising.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import k6.gatherlove.fundraising.dto.CampaignCreationRequest;
+import k6.gatherlove.fundraising.exception.ValidationException;
+import k6.gatherlove.fundraising.model.Campaign;
+import k6.gatherlove.fundraising.model.CampaignStatus;
+import k6.gatherlove.fundraising.repository.CampaignRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,57 +30,88 @@ class CampaignServiceTest {
     private CampaignRepository campaignRepository;
 
     @InjectMocks
-    private CampaignService campaignService;
+    private CampaignServiceImpl campaignService;
 
-    private Campaign validCampaign;
+    private CampaignCreationRequest validRequest;
+    private CampaignCreationRequest invalidRequest;
+    private Long userId;
 
     @BeforeEach
     void setUp() {
-        validCampaign = CampaignFactory.createCampaign(
-            "Help Orphans", "Fund for orphanage", 5000.0, "2025-12-31"
+        userId = 1L;
+        validRequest = new CampaignCreationRequest(
+                "Help Orphans",
+                "Supporting orphans with education and healthcare needs. This detailed description explains the campaign goals.",
+                new BigDecimal("5000.00"),
+                LocalDate.now().plusMonths(3)
+        );
+
+        invalidRequest = new CampaignCreationRequest(
+                "",
+                "",
+                new BigDecimal("-100.00"),
+                LocalDate.now().minusDays(1)
         );
     }
 
     @Test
-    void shouldSaveValidCampaign() {
-        when(campaignRepository.save(any(Campaign.class))).thenReturn(validCampaign);
+    void shouldCreateCampaignWhenDataIsValid() {
+        // Arrange
+        Campaign campaign = new Campaign();
+        campaign.setTitle("Help Orphans");
+        campaign.setDescription("Supporting orphans with education and healthcare needs. This detailed description explains the campaign goals.");
+        campaign.setGoalAmount(new BigDecimal("5000.00"));
+        campaign.setDeadline(LocalDate.now().plusMonths(3));
+        campaign.setStatus(CampaignStatus.PENDING_VERIFICATION);
+        campaign.setUserId(userId);
+        
+        when(campaignRepository.save(any(Campaign.class))).thenReturn(campaign);
 
-        Campaign savedCampaign = campaignService.createCampaign(
-            "Help Orphans", "Fund for orphanage", 5000.0, "2025-12-31"
-        );
+        // Act
+        Campaign result = campaignService.createCampaign(validRequest, userId);
 
-        assertThat(savedCampaign).isNotNull();
-        assertThat(savedCampaign.getStatus()).isEqualTo(CampaignStatus.PENDING_VERIFICATION);
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getStatus()).isEqualTo(CampaignStatus.PENDING_VERIFICATION);
+        assertThat(result.getUserId()).isEqualTo(userId);
         verify(campaignRepository, times(1)).save(any(Campaign.class));
     }
 
     @Test
-    void shouldNotSaveInvalidCampaign() {
-        assertThrows(IllegalArgumentException.class, () -> campaignService.createCampaign(
-            "", "", -100.0, "2020-01-01"
-        ));
+    void shouldThrowExceptionWhenDataIsInvalid() {
+        // Act & Assert
+        assertThrows(ValidationException.class, 
+                () -> campaignService.createCampaign(invalidRequest, userId));
         verify(campaignRepository, never()).save(any(Campaign.class));
     }
-
+    
     @Test
-    void shouldReturnAllCampaigns() {
-        when(campaignRepository.findAll()).thenReturn(List.of(validCampaign));
-
-        List<Campaign> campaigns = campaignService.getAllCampaigns();
-
-        assertThat(campaigns).isNotEmpty();
-        assertThat(campaigns.size()).isEqualTo(1);
-        verify(campaignRepository, times(1)).findAll();
+    void shouldGetCampaignsByUserId() {
+        // Arrange
+        Campaign campaign = new Campaign();
+        campaign.setTitle("Help Orphans");
+        campaign.setUserId(userId);
+        
+        when(campaignRepository.findByUserId(userId)).thenReturn(List.of(campaign));
+        
+        
+        // Act
+        List<Campaign> result = campaignService.getCampaignsByUserId(userId);
+        
+        // Assert
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getTitle()).isEqualTo("Help Orphans");
     }
-
+    
     @Test
-    void shouldReturnCampaignById() {
-        when(campaignRepository.findById(1L)).thenReturn(Optional.of(validCampaign));
-
-        Optional<Campaign> foundCampaign = campaignService.getCampaignById(1L);
-
-        assertThat(foundCampaign).isPresent();
-        assertThat(foundCampaign.get().getTitle()).isEqualTo("Help Orphans");
-        verify(campaignRepository, times(1)).findById(1L);
+    void shouldReturnEmptyListWhenNoUserCampaigns() {
+        // Arrange
+        when(campaignRepository.findByUserId(userId)).thenReturn(Collections.emptyList());
+        
+        // Act
+        List<Campaign> result = campaignService.getCampaignsByUserId(userId);
+        
+        // Assert
+        assertThat(result).isEmpty();
     }
 }
