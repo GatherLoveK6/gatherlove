@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InMemoryDonationRepository implements DonationRepository {
-
     private final List<Donation> donations = new ArrayList<>();
 
     @Override
@@ -16,10 +15,12 @@ public class InMemoryDonationRepository implements DonationRepository {
 
     @Override
     public Donation findById(String donationId) {
-        return donations.stream()
-                .filter(d -> d.getId().equals(donationId))
-                .findFirst()
-                .orElse(null);
+        for (Donation d : donations) {
+            if (d.getId().equals(donationId)) {
+                return d;
+            }
+        }
+        return null;
     }
 
     @Override
