@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import k6.gatherlove.AdminDashboard.dto.StatusUpdateRequest;
+
 
 @RestController
 @RequestMapping("/admin/campaigns")
@@ -20,4 +22,14 @@ public class AdminCampaignController {
     public ResponseEntity<List<Campaign>> getCampaignsByStatus(@RequestParam String status) {
         return ResponseEntity.ok(adminCampaignService.getCampaignsByStatus(status));
     }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<Campaign> updateCampaignStatus(
+            @PathVariable Long id,
+            @RequestBody StatusUpdateRequest request
+    ) {
+        Campaign updated = adminCampaignService.updateCampaignStatus(id, request.getStatus());
+        return ResponseEntity.ok(updated);
+    }
+
 }

@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface AdminCampaignService {
     List<Campaign> getCampaignsByStatus(String status);
+    Campaign updateCampaignStatus(Long id, String status);
 }

@@ -1,11 +1,9 @@
 package k6.gatherlove.AdminDashboard.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import k6.gatherlove.AdminDashboard.dto.Campaign;
 import k6.gatherlove.AdminDashboard.service.AdminCampaignService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
