@@ -10,10 +10,12 @@ public class AdminTransparencyReportServiceImpl implements AdminTransparencyRepo
 
     @Override
     public TransparencyReportResponse getReportByCampaignId(Long campaignId) {
+        return generateMockReport(campaignId);
+    }
+
+    private TransparencyReportResponse generateMockReport(Long campaignId) {
         return new TransparencyReportResponse(
-                campaignId,
-                100000,
-                85000,
+                campaignId, 100000, 85000,
                 List.of("Books", "School Supplies", "Logistics")
         );
     }
