@@ -20,7 +20,7 @@ public class ArticleManagementServiceTest {
     @BeforeEach
     void setUp() {
         articleRepository = mock(ArticleManagementRepository.class);
-        articleService = new ArticleManagementService(articleRepository);
+        articleService = new ArticleManagementServiceImpl(articleRepository);
 
         article = ArticleManagementModel.builder()
                 .id(1L)
