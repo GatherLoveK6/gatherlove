@@ -17,3 +17,4 @@ class PaymentMethodDomainTest {
         assertTrue(paymentMethod.isActive(), "Payment method should be active after reactivation.");
     }
 }
+

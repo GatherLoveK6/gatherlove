@@ -33,3 +33,4 @@ class WalletDomainTest {
                 "Attempting to withdraw more than the balance should throw an exception.");
     }
 }
+
