@@ -1,10 +1,13 @@
 package k6.gatherlove.donation.comment.repository;
 
 import k6.gatherlove.donation.comment.model.Comment;
+import org.springframework.stereotype.Repository;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Repository
 public class InMemoryCommentRepository implements CommentRepository {
     private final List<Comment> comments = new ArrayList<>();
 
@@ -18,6 +21,7 @@ public class InMemoryCommentRepository implements CommentRepository {
     public List<Comment> findByCampaignId(String campaignId) {
         return comments.stream()
                 .filter(c -> c.getCampaignId().equals(campaignId))
-                .collect(Collectors.toList());
+                .sorted(Comparator.comparing(Comment::getTimestamp))
+                .collect(Collectors.toUnmodifiableList());
     }
 }
