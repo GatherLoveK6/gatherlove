@@ -33,8 +33,8 @@ public class UserReportServiceImpl implements ReportService {
 
     @Override
     public List<Report> viewReports(String userId) {
-        // Not implemented yet
-        throw new UnsupportedOperationException("viewReports is not implemented yet.");
+        // Users can see only their own reports
+        return reportRepository.findByReportedBy(userId);
     }
 
     @Override
