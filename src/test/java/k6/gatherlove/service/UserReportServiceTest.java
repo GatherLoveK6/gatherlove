@@ -70,5 +70,24 @@ class UserReportServiceTest {
         String expectedMessage = "Users are not allowed to verify campaigns.";
         assertTrue(exception.getMessage().contains(expectedMessage));
     }
+
+    @Test
+    void testCreateReportWithNullReason() {
+        Report dummy = Report.builder()
+                .id(2L)
+                .campaignId("CAMPX")
+                .reportedBy("USR2")
+                .reason(null)
+                .evidenceUrl("http://evidence.com/image.png")
+                .createdAt(LocalDateTime.now())
+                .verified(false)
+                .build();
+
+        when(reportRepository.save(any())).thenReturn(dummy);
+
+        Report created = userReportAction.createReport("CAMPX", "USR2", null, "http://evidence.com/image.png");
+        assertNull(created.getReason());
+    }
+
 }
 
