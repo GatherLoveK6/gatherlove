@@ -24,13 +24,13 @@ public class InMemoryDonationRepository implements DonationRepository {
 
     @Override
     public List<Donation> findAll() {
-        return new ArrayList<>(donations);
+        return List.copyOf(donations);
     }
 
     @Override
     public List<Donation> findByUserId(String userId) {
         return donations.stream()
                 .filter(d -> d.getUserId().equals(userId))
-                .collect(Collectors.toList());
+                .collect(Collectors.toUnmodifiableList());
     }
 }
