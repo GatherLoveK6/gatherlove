@@ -5,7 +5,6 @@ import k6.gatherlove.donation.repository.DonationRepository;
 import java.util.List;
 
 public class DonationServiceImpl implements DonationService {
-
     public static final double INITIAL_USER_BALANCE = 100.0;
     private double userBalance = INITIAL_USER_BALANCE;
     private final DonationRepository donationRepository;
@@ -15,10 +14,10 @@ public class DonationServiceImpl implements DonationService {
     }
 
     @Override
-    public Donation createDonation(double amount, String campaignId) {
+    public Donation createDonation(String userId, double amount, String campaignId) {
         checkFunds(amount);
         userBalance -= amount;
-        Donation donation = new Donation(amount, campaignId);
+        Donation donation = new Donation(userId, amount, campaignId);
         donation.setConfirmed(true);
         donationRepository.save(donation);
         return donation;
@@ -27,9 +26,7 @@ public class DonationServiceImpl implements DonationService {
     @Override
     public void cancelDonation(String donationId) {
         Donation d = donationRepository.findById(donationId);
-        if (d == null) {
-            throw new IllegalArgumentException("Donation does not exist!");
-        }
+        if (d == null) throw new IllegalArgumentException("Donation does not exist!");
         if (d.isCanceled()) return;
         d.setCanceled(true);
         userBalance += d.getAmount();
@@ -43,6 +40,11 @@ public class DonationServiceImpl implements DonationService {
     @Override
     public List<Donation> listAllDonations() {
         return donationRepository.findAll();
+    }
+
+    @Override
+    public List<Donation> listDonationsByUser(String userId) {   // ← new
+        return donationRepository.findByUserId(userId);
     }
 
     @Override

@@ -7,4 +7,5 @@ public interface DonationRepository {
     Donation save(Donation donation);
     Donation findById(String donationId);
     List<Donation> findAll();
+    List<Donation> findByUserId(String userId);
 }
