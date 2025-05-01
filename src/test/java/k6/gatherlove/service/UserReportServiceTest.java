@@ -1,70 +1,74 @@
 package k6.gatherlove.service;
 
 import k6.gatherlove.model.Report;
-import k6.gatherlove.repository.ReportRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-
+import k6.gatherlove.repository.ReportRepository;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-class RTest {
+class UserReportServiceTest {
 
-    ReportRepository rr;
-    UserReportServiceImpl s;
+    private ReportRepository reportRepository;
+    private UserReportServiceImpl userReportAction;
 
     @BeforeEach
-    void abc() {
-        rr = mock(ReportRepository.class);
-        s = new UserReportServiceImpl(rr);
+    void setUp() {
+        reportRepository = mock(ReportRepository.class);
+        userReportAction = new UserReportServiceImpl(reportRepository);
     }
 
     @Test
-    void A() {
-        Report r = Report.builder()
-                .id(99L)
-                .campaignId("c1")
-                .reportedBy("u1")
-                .reason("bad stuff")
-                .evidenceUrl("http://link")
+    void testCreateReport() {
+        Report dummyReport = Report.builder()
+                .id(1L)
+                .campaignId("CAMPAIGN1")
+                .reportedBy("USER1")
+                .reason("Violation of rules")
+                .evidenceUrl("http://evidence.com/img.jpg")
                 .createdAt(LocalDateTime.now())
                 .verified(false)
                 .build();
 
-        when(rr.save(any())).thenReturn(r);
+        when(reportRepository.save(any(Report.class))).thenReturn(dummyReport);
 
-        var result = s.createReport("c1", "u1", "bad stuff", "http://link");
-        assertEquals("bad stuff", result.getReason());
-        verify(rr, times(1)).save(any());
+        Report created = userReportAction.createReport("CAMPAIGN1", "USER1", "Violation of rules", "http://evidence.com/img.jpg");
+        assertNotNull(created);
+        assertEquals("Violation of rules", created.getReason());
+        verify(reportRepository, times(1)).save(any(Report.class));
     }
 
     @Test
-    void B() {
-        Report x = Report.builder().id(1L).reportedBy("someone").build();
-        Report y = Report.builder().id(2L).reportedBy("someone").build();
+    void testViewReports() {
+        Report report1 = Report.builder().id(1L).reportedBy("USER1").build();
+        Report report2 = Report.builder().id(2L).reportedBy("USER1").build();
+        when(reportRepository.findByReportedBy("USER1")).thenReturn(Arrays.asList(report1, report2));
 
-        when(rr.findByReportedBy("someone")).thenReturn(Arrays.asList(x, y));
-
-        var z = s.viewReports("someone");
-        assertEquals(2, z.size());
+        List<Report> reports = userReportAction.viewReports("USER1");
+        assertEquals(2, reports.size());
     }
 
     @Test
-    void C() {
-        Exception e = assertThrows(UnsupportedOperationException.class, () -> {
-            s.deleteReport(5L);
+    void testDeleteReportThrowsException() {
+        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
+            userReportAction.deleteReport(1L);
         });
-        assertTrue(e.getMessage().contains("not allowed"));
+        String expectedMessage = "Users are not allowed to delete reports.";
+        assertTrue(exception.getMessage().contains(expectedMessage));
     }
 
     @Test
-    void D() {
-        var e = assertThrows(UnsupportedOperationException.class, () -> {
-            s.verifyCampaign("xxx");
+    void testVerifyCampaignThrowsException() {
+        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
+            userReportAction.verifyCampaign("CAMPAIGN1");
         });
-        assertTrue(e.getMessage().contains("verify"));
+        String expectedMessage = "Users are not allowed to verify campaigns.";
+        assertTrue(exception.getMessage().contains(expectedMessage));
     }
 }
+
