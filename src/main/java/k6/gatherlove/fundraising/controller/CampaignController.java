@@ -29,7 +29,7 @@ public class CampaignController {
             Campaign createdCampaign = campaignService.createCampaign(request, userId);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdCampaign);
         } catch (ValidationException e) {
-            log.error("Validation error when creating campaign: {}", e.getMessage());
+            log.error("Validation error creating campaign for user {}: {}", userId, e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
