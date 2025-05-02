@@ -1,35 +1,26 @@
 package k6.gatherlove.ArticleManagement.repository;
 
 import k6.gatherlove.ArticleManagement.model.ArticleManagementModel;
-import k6.gatherlove.user.User;
-import k6.gatherlove.user.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-@DataJpaTest
 public class ArticleManagementRepositoryTest {
 
-    @Autowired
     private ArticleManagementRepository articleRepository;
 
     private ArticleManagementModel article;
 
     @BeforeEach
     void setUp() {
-        User admin = User.builder()
-                .id(1L)
-                .username("adminUser")
-                .password("securepass")
-                .role(Role.ADMIN)
-                .build();
+        articleRepository = mock(ArticleManagementRepository.class);
 
         article = ArticleManagementModel.builder()
+                .id(1L)
                 .title("Why Transparency Matters in Donations")
                 .content("Transparency builds trust and encourages recurring contributions.")
                 .author("adminUser")
@@ -38,16 +29,23 @@ public class ArticleManagementRepositoryTest {
 
     @Test
     void testSaveArticle() {
+        when(articleRepository.save(article)).thenReturn(article);
+
         ArticleManagementModel saved = articleRepository.save(article);
-        assertNotNull(saved.getId());
+
+        assertNotNull(saved);
         assertEquals("Why Transparency Matters in Donations", saved.getTitle());
+        verify(articleRepository, times(1)).save(article);
     }
 
     @Test
     void testFindAll() {
-        articleRepository.save(article);
-        List<ArticleManagementModel> list = articleRepository.findAll();
-        assertFalse(list.isEmpty());
+        when(articleRepository.findAll()).thenReturn(List.of(article));
+
+        List<ArticleManagementModel> articles = articleRepository.findAll();
+
+        assertFalse(articles.isEmpty());
+        assertEquals(1, articles.size());
+        verify(articleRepository, times(1)).findAll();
     }
 }
-

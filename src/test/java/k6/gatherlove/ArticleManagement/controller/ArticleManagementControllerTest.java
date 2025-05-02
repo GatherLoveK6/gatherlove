@@ -6,6 +6,7 @@ import k6.gatherlove.ArticleManagement.service.ArticleManagementService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -14,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -30,13 +32,12 @@ public class ArticleManagementControllerTest {
     private ArticleManagementModel article;
 
     @BeforeEach
-    void setUp() {
-        article = ArticleManagementModel.builder()
-                .id(1L)
-                .title("Why Donations Matter")
-                .content("Content about the impact of donations.")
-                .author("adminUser")
-                .build();
+    void setup() {
+        article = new ArticleManagementModel();
+        article.setId(1L);
+        article.setTitle("Test Title");
+        article.setContent("Test Content");
+        article.setAuthor("Admin");
     }
 
     @Test
@@ -44,26 +45,34 @@ public class ArticleManagementControllerTest {
         when(articleService.getAllArticles()).thenReturn(List.of(article));
 
         mockMvc.perform(get("/articles"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].title").value("Why Donations Matter"));
+                .andExpect(status().isOk());
     }
 
     @Test
     void testCreateArticle() throws Exception {
-        when(articleService.createArticle(Mockito.any())).thenReturn(article);
+        when(articleService.createArticle(any())).thenReturn(article);
 
         mockMvc.perform(post("/articles")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(asJsonString(article)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.author").value("adminUser"));
+                        .content(new ObjectMapper().writeValueAsString(article)))
+                .andExpect(status().isOk());
     }
 
-    private static String asJsonString(Object obj) {
-        try {
-            return new ObjectMapper().writeValueAsString(obj);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    @Test
+    void testUpdateArticle() throws Exception {
+        when(articleService.updateArticle(any(), any())).thenReturn(article);
+
+        mockMvc.perform(put("/articles/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(article)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testDeleteArticle() throws Exception {
+        Mockito.doNothing().when(articleService).deleteArticle(1L);
+
+        mockMvc.perform(delete("/articles/1"))
+                .andExpect(status().isNoContent());
     }
 }

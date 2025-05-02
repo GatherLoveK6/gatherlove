@@ -24,4 +24,15 @@ public class ArticleManagementController {
     public ResponseEntity<ArticleManagementModel> createArticle(@RequestBody ArticleManagementModel article) {
         return ResponseEntity.ok(articleService.createArticle(article));
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ArticleManagementModel> updateArticle(@PathVariable Long id, @RequestBody ArticleManagementModel updated) {
+        return ResponseEntity.ok(articleService.updateArticle(id, updated));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteArticle(@PathVariable Long id) {
+        articleService.deleteArticle(id);
+        return ResponseEntity.noContent().build();
+    }
 }
