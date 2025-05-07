@@ -5,21 +5,18 @@ import k6.gatherlove.domain.Wallet;
 import k6.gatherlove.service.WalletService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
+import java.util.List;
 import java.math.BigDecimal;
 
 @RestController
 @RequestMapping("/wallet")
 public class WalletController {
-
     private final WalletService walletService;
-
     @Autowired
     public WalletController(WalletService walletService) {
         this.walletService = walletService;
     }
 
-    // Endpoint to top-up wallet
     @PostMapping("/topup")
     public Transaction topUp(@RequestParam String userId,
                              @RequestParam BigDecimal amount,
@@ -27,16 +24,19 @@ public class WalletController {
         return walletService.topUp(userId, amount, paymentMethodId);
     }
 
-    // Endpoint to withdraw funds
     @PostMapping("/withdraw")
     public Transaction withdraw(@RequestParam String userId,
                                 @RequestParam BigDecimal amount) {
         return walletService.withdraw(userId, amount);
     }
 
-    // Endpoint to check wallet balance
     @GetMapping("/balance")
     public Wallet getWallet(@RequestParam String userId) {
         return walletService.getWallet(userId);
+    }
+
+    @GetMapping("/transactions")
+    public List<Transaction> transactionHistory(@RequestParam String userId) {
+        return walletService.getTransactions(userId);
     }
 }
