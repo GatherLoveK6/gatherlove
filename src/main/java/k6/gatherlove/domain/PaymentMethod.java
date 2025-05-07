@@ -3,7 +3,7 @@ package k6.gatherlove.domain;
 public class PaymentMethod {
     private String paymentMethodId;
     private String userId;
-    private String type;  // E.g., "CreditCard", "OVO", "GoPay", etc.
+    private String type;
     private boolean active;
 
     public PaymentMethod(String paymentMethodId, String userId, String type) {
@@ -21,7 +21,6 @@ public class PaymentMethod {
         this.active = false;
     }
 
-    // Getters (and setters if needed)
     public String getPaymentMethodId() {
         return paymentMethodId;
     }
@@ -37,5 +36,8 @@ public class PaymentMethod {
     public boolean isActive() {
         return active;
     }
-}
 
+    public void setType(String newType) {
+        this.type = newType;
+    }
+}
