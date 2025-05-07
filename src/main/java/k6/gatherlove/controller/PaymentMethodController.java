@@ -1,14 +1,18 @@
 package k6.gatherlove.controller;
 
 import k6.gatherlove.domain.PaymentMethod;
+import k6.gatherlove.dto.PaymentMethodDto;
 import k6.gatherlove.service.PaymentMethodService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/wallet/payment-methods")
+@RequestMapping("/users/{userId}/payment-methods")
 public class PaymentMethodController {
     private final PaymentMethodService svc;
 
@@ -18,30 +22,42 @@ public class PaymentMethodController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public PaymentMethod create(@RequestParam String userId,
-                                @RequestParam String paymentMethodId,
-                                @RequestParam String type) {
-        return svc.create(userId, paymentMethodId, type);
+    public ResponseEntity<PaymentMethod> create(
+            @PathVariable String userId,
+            @RequestBody PaymentMethodDto body
+    ) {
+        PaymentMethod pm = svc.create(userId, body.getPaymentMethodId(), body.getType());
+
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{pmId}")
+                .buildAndExpand(pm.getPaymentMethodId())
+                .toUri();
+
+        return ResponseEntity.created(location).body(pm);
     }
 
     @GetMapping
-    public List<PaymentMethod> list(@RequestParam String userId) {
-        return svc.getAll(userId);
+    public ResponseEntity<List<PaymentMethod>> list(@PathVariable String userId) {
+        return ResponseEntity.ok(svc.getAll(userId));
     }
 
     @PutMapping("/{pmId}")
-    public PaymentMethod update(@PathVariable String pmId,
-                                @RequestParam String userId,
-                                @RequestParam String type) {
-        return svc.update(userId, pmId, type);
+    public ResponseEntity<PaymentMethod> update(
+            @PathVariable String userId,
+            @PathVariable String pmId,
+            @RequestBody PaymentMethodDto body
+    ) {
+        PaymentMethod updated = svc.update(userId, pmId, body.getType());
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{pmId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable String pmId,
-                       @RequestParam String userId) {
+    public ResponseEntity<Void> delete(
+            @PathVariable String userId,
+            @PathVariable String pmId
+    ) {
         svc.delete(userId, pmId);
+        return ResponseEntity.noContent().build();
     }
 }
-
