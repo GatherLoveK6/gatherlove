@@ -2,41 +2,64 @@ package k6.gatherlove.controller;
 
 import k6.gatherlove.domain.Transaction;
 import k6.gatherlove.domain.Wallet;
+import k6.gatherlove.dto.TopUpRequest;
+import k6.gatherlove.dto.WithdrawRequest;
 import k6.gatherlove.service.WalletService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 import java.util.List;
-import java.math.BigDecimal;
 
 @RestController
-@RequestMapping("/wallet")
+@RequestMapping("/users/{userId}/wallet")
 public class WalletController {
     private final WalletService walletService;
+
     @Autowired
     public WalletController(WalletService walletService) {
         this.walletService = walletService;
     }
 
     @PostMapping("/topup")
-    public Transaction topUp(@RequestParam String userId,
-                             @RequestParam BigDecimal amount,
-                             @RequestParam String paymentMethodId) {
-        return walletService.topUp(userId, amount, paymentMethodId);
+    public ResponseEntity<Transaction> topUp(
+            @PathVariable String userId,
+            @RequestBody TopUpRequest body
+    ) {
+        Transaction tx = walletService.topUp(userId, body.getAmount(), body.getPaymentMethodId());
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/transactions/{txId}")
+                .buildAndExpand(tx.getTransactionId())
+                .toUri();
+
+        return ResponseEntity.created(location).body(tx);
     }
 
     @PostMapping("/withdraw")
-    public Transaction withdraw(@RequestParam String userId,
-                                @RequestParam BigDecimal amount) {
-        return walletService.withdraw(userId, amount);
+    public ResponseEntity<Transaction> withdraw(
+            @PathVariable String userId,
+            @RequestBody WithdrawRequest body
+    ) {
+        Transaction tx = walletService.withdraw(userId, body.getAmount());
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/transactions/{txId}")
+                .buildAndExpand(tx.getTransactionId())
+                .toUri();
+
+        return ResponseEntity.created(location).body(tx);
     }
 
-    @GetMapping("/balance")
-    public Wallet getWallet(@RequestParam String userId) {
-        return walletService.getWallet(userId);
+    @GetMapping
+    public ResponseEntity<Wallet> getWallet(@PathVariable String userId) {
+        return ResponseEntity.ok(walletService.getWallet(userId));
     }
 
     @GetMapping("/transactions")
-    public List<Transaction> transactionHistory(@RequestParam String userId) {
-        return walletService.getTransactions(userId);
+    public ResponseEntity<List<Transaction>> transactionHistory(@PathVariable String userId) {
+        return ResponseEntity.ok(walletService.getTransactions(userId));
     }
 }
