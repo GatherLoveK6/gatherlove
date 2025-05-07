@@ -7,6 +7,7 @@ import k6.gatherlove.repository.TransactionRepository;
 import k6.gatherlove.repository.WalletRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -27,16 +28,29 @@ public class WalletService {
     }
 
     public Transaction topUp(String userId, BigDecimal amount, String paymentMethodId) {
+        // validate (stubbed) payment method
         paymentMethodService.validatePaymentMethod(userId, paymentMethodId);
+
+        // load or create wallet
         Wallet wallet = walletRepo.findByUserId(userId);
         if (wallet == null) {
             wallet = new Wallet(UUID.randomUUID().toString(), userId);
         }
+
+        // perform top-up
         wallet.topUp(amount);
-        Transaction tx = new Transaction(UUID.randomUUID().toString(), wallet.getWalletId(), TransactionType.TOP_UP, amount);
-        tx.markCompleted();
         walletRepo.save(wallet);
+
+        // record transaction under userId (not walletId)
+        Transaction tx = new Transaction(
+                UUID.randomUUID().toString(),
+                userId,
+                TransactionType.TOP_UP,
+                amount
+        );
+        tx.markCompleted();
         transactionRepo.save(tx);
+
         return tx;
     }
 
@@ -45,11 +59,21 @@ public class WalletService {
         if (wallet == null || !wallet.canWithdraw(amount)) {
             throw new IllegalArgumentException("Insufficient funds or wallet not found for user: " + userId);
         }
+
+        // perform withdrawal
         wallet.withdraw(amount);
-        Transaction tx = new Transaction(UUID.randomUUID().toString(), wallet.getWalletId(), TransactionType.WITHDRAW, amount);
-        tx.markCompleted();
         walletRepo.save(wallet);
+
+        // record transaction under userId
+        Transaction tx = new Transaction(
+                UUID.randomUUID().toString(),
+                userId,
+                TransactionType.WITHDRAW,
+                amount
+        );
+        tx.markCompleted();
         transactionRepo.save(tx);
+
         return tx;
     }
 
