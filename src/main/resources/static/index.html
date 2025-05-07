@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Wallet & Payment Method Tester</title>
+  <style>
+    body { font-family: sans-serif; margin: 2em; }
+    fieldset { margin-bottom: 1.5em; }
+    pre { background: #f5f5f5; padding: 1em; }
+  </style>
+</head>
+<body>
+
+<h1>API Tester</h1>
+
+<!-- 1) Payment Method -->
+<fieldset>
+  <legend>Create Payment Method</legend>
+  <input id="pm-user"     placeholder="User ID"      value="alice"/>
+  <input id="pm-id"       placeholder="PM ID"        value="pm-1"/>
+  <input id="pm-type"     placeholder="Type"         value="CreditCard"/>
+  <button onclick="createPM()">Create</button>
+</fieldset>
+
+<fieldset>
+  <legend>List Payment Methods</legend>
+  <input id="pm-list-user" placeholder="User ID" value="alice"/>
+  <button onclick="listPM()">List</button>
+</fieldset>
+
+<fieldset>
+  <legend>Update Payment Method</legend>
+  <input id="pm-up-user" placeholder="User ID" value="alice"/>
+  <input id="pm-up-id"   placeholder="PM ID"   value="pm-1"/>
+  <input id="pm-up-type" placeholder="New Type" value="GoPay"/>
+  <button onclick="updatePM()">Update</button>
+</fieldset>
+
+<fieldset>
+  <legend>Delete Payment Method</legend>
+  <input id="pm-del-user" placeholder="User ID" value="alice"/>
+  <input id="pm-del-id"   placeholder="PM ID"   value="pm-1"/>
+  <button onclick="deletePM()">Delete</button>
+</fieldset>
+
+<hr/>
+
+<!-- 2) Wallet -->
+<fieldset>
+  <legend>Top Up Wallet</legend>
+  <input id="w-user"      placeholder="User ID"       value="alice"/>
+  <input id="w-amount"    placeholder="Amount" value="100.00"/>
+  <input id="w-pm"        placeholder="PM ID"         value="pm-1"/>
+  <button onclick="topUp()">Top Up</button>
+</fieldset>
+
+<fieldset>
+  <legend>Withdraw</legend>
+  <input id="w-wd-user"   placeholder="User ID" value="alice"/>
+  <input id="w-wd-amount" placeholder="Amount"  value="50.00"/>
+  <button onclick="withdraw()">Withdraw</button>
+</fieldset>
+
+<fieldset>
+  <legend>Check Balance</legend>
+  <input id="w-bal-user" placeholder="User ID" value="alice"/>
+  <button onclick="getBalance()">Get Balance</button>
+</fieldset>
+
+<fieldset>
+  <legend>Transaction History</legend>
+  <input id="w-tx-user" placeholder="User ID" value="alice"/>
+  <button onclick="getTx()">Get Transactions</button>
+</fieldset>
+
+<h2>Response</h2>
+<pre id="output"></pre>
+
+<script>
+  const out = document.getElementById('output');
+
+  function handle(res) {
+    out.textContent =
+            `Status: ${res.status} ${res.statusText}\n` +
+            [...res.headers.entries()].map(h=>`${h[0]}: ${h[1]}`).join('\n') +
+            '\n\n';
+    return res.json()
+            .then(json => out.textContent += JSON.stringify(json, null, 2))
+            .catch(()=> out.textContent += '(no JSON body)');
+  }
+
+  function createPM() {
+    const u = document.getElementById('pm-user').value;
+    const id = document.getElementById('pm-id').value;
+    const type = document.getElementById('pm-type').value;
+    fetch(`/users/${u}/payment-methods`, {
+      method: 'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ paymentMethodId: id, type })
+    })
+            .then(handle);
+  }
+
+  function listPM() {
+    const u = document.getElementById('pm-list-user').value;
+    fetch(`/users/${u}/payment-methods`)
+            .then(handle);
+  }
+
+  function updatePM() {
+    const u = document.getElementById('pm-up-user').value;
+    const id = document.getElementById('pm-up-id').value;
+    const type = document.getElementById('pm-up-type').value;
+    fetch(`/users/${u}/payment-methods/${id}`, {
+      method: 'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ type })
+    })
+            .then(handle);
+  }
+
+  function deletePM() {
+    const u = document.getElementById('pm-del-user').value;
+    const id = document.getElementById('pm-del-id').value;
+    fetch(`/users/${u}/payment-methods/${id}`, {
+      method: 'DELETE'
+    })
+            .then(handle);
+  }
+
+  function topUp() {
+    const u = document.getElementById('w-user').value;
+    const amount = parseFloat(document.getElementById('w-amount').value);
+    const pm = document.getElementById('w-pm').value;
+    fetch(`/users/${u}/wallet/topup`, {
+      method: 'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ amount, paymentMethodId: pm })
+    })
+            .then(handle);
+  }
+
+  function withdraw() {
+    const u = document.getElementById('w-wd-user').value;
+    const amount = parseFloat(document.getElementById('w-wd-amount').value);
+    fetch(`/users/${u}/wallet/withdraw`, {
+      method: 'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ amount })
+    })
+            .then(handle);
+  }
+
+  function getBalance() {
+    const u = document.getElementById('w-bal-user').value;
+    fetch(`/users/${u}/wallet`)
+            .then(handle);
+  }
+
+  function getTx() {
+    const u = document.getElementById('w-tx-user').value;
+    fetch(`/users/${u}/wallet/transactions`)
+            .then(handle);
+  }
+</script>
+
+</body>
+</html>
