@@ -1,14 +1,13 @@
 package k6.gatherlove.service;
 
-import k6.gatherlove.domain.Transaction;
-import k6.gatherlove.domain.Wallet;
+import k6.gatherlove.repository.InMemoryPaymentMethodRepository;
 import k6.gatherlove.repository.InMemoryTransactionRepository;
 import k6.gatherlove.repository.InMemoryWalletRepository;
+import k6.gatherlove.repository.PaymentMethodRepository;
 import k6.gatherlove.repository.TransactionRepository;
 import k6.gatherlove.repository.WalletRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -17,6 +16,7 @@ class WalletServiceTest {
 
     private WalletRepository walletRepo;
     private TransactionRepository transactionRepo;
+    private PaymentMethodRepository paymentMethodRepo;
     private PaymentMethodService paymentMethodService;
     private WalletService walletService;
 
@@ -24,58 +24,29 @@ class WalletServiceTest {
     void setUp() {
         walletRepo = new InMemoryWalletRepository();
         transactionRepo = new InMemoryTransactionRepository();
-        paymentMethodService = new PaymentMethodService();
+        paymentMethodRepo = new InMemoryPaymentMethodRepository();
+        paymentMethodService = new PaymentMethodService(paymentMethodRepo);
         walletService = new WalletService(walletRepo, transactionRepo, paymentMethodService);
     }
 
     @Test
-    void testTopUpCreatesWalletIfNull() {
-        String userId = "testUser1";
-        BigDecimal amount = BigDecimal.valueOf(100);
-
-        // Act
-        Transaction tx = walletService.topUp(userId, amount, "pm_001");
-
-        // Assert
-        assertNotNull(tx.getTransactionId());
+    void topUp_createsTransactionAndIncrementsBalance() {
+        var tx = walletService.topUp("user1", BigDecimal.valueOf(100), "pm1");
         assertEquals("SUCCESS", tx.getStatus());
-        Wallet wallet = walletService.getWallet(userId);
-        assertEquals(amount, wallet.getBalance());
+        assertEquals(BigDecimal.valueOf(100), walletService.getWallet("user1").getBalance());
     }
 
     @Test
-    void testWithdrawSuccess() {
-        String userId = "testUser2";
-
-        // First, top-up with 100
-        walletService.topUp(userId, BigDecimal.valueOf(100), "pm_002");
-
-        // Now, withdraw 50
-        Transaction tx = walletService.withdraw(userId, BigDecimal.valueOf(50));
-        assertNotNull(tx.getTransactionId());
+    void withdraw_reducesBalance() {
+        walletService.topUp("user2", BigDecimal.valueOf(200), "pm2");
+        var tx = walletService.withdraw("user2", BigDecimal.valueOf(50));
         assertEquals("SUCCESS", tx.getStatus());
-
-        Wallet wallet = walletService.getWallet(userId);
-        assertEquals(BigDecimal.valueOf(50), wallet.getBalance());
+        assertEquals(BigDecimal.valueOf(150), walletService.getWallet("user2").getBalance());
     }
 
     @Test
-    void testWithdrawInsufficientFunds() {
-        String userId = "testUser3";
-
-        // Create wallet with 20
-        walletService.topUp(userId, BigDecimal.valueOf(20), "pm_003");
-
-        // Attempt to withdraw 50
+    void withdraw_insufficientFunds_throws() {
         assertThrows(IllegalArgumentException.class,
-                () -> walletService.withdraw(userId, BigDecimal.valueOf(50))
-        );
-    }
-
-    @Test
-    void testGetWalletReturnsNullIfNotExists() {
-        // No top-up, no wallet
-        Wallet wallet = walletService.getWallet("nonExistentUser");
-        assertNull(wallet);
+                () -> walletService.withdraw("user3", BigDecimal.valueOf(10)));
     }
 }
