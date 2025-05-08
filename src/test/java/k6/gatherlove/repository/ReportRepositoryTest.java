@@ -6,9 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
-import java.time.LocalDateTime;
 import java.util.List;
-
+import java.time.LocalDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
@@ -18,36 +17,37 @@ class ReportRepositoryTest {
     private ReportRepository reportRepository;
 
     @Test
-    @DisplayName("Should find reports by reportedBy field")
+    @DisplayName("Should return reports by reportedBy user ID")
     void testFindByReportedBy() {
         // Arrange
         Report report1 = Report.builder()
-                .campaignId("camp123")
-                .reportedBy("user1")
-                .reason("Spam")
-                .evidenceUrl("http://example.com/evidence1")
+                .campaignId("camp1")
+                .reportedBy("user123")
+                .reason("reason 1")
                 .createdAt(LocalDateTime.now())
-                .verified(false)
                 .build();
 
         Report report2 = Report.builder()
-                .campaignId("camp456")
-                .reportedBy("user1")
-                .reason("Inappropriate Content")
-                .evidenceUrl("http://example.com/evidence2")
+                .campaignId("camp2")
+                .reportedBy("user123")
+                .reason("inappropriate")
                 .createdAt(LocalDateTime.now())
-                .verified(false)
                 .build();
 
-        reportRepository.save(report1);
-        reportRepository.save(report2);
+        Report report3 = Report.builder()
+                .campaignId("camp3")
+                .reportedBy("otherUser")
+                .reason("scam")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        reportRepository.saveAll(List.of(report1, report2, report3));
 
         // Act
-        List<Report> result = reportRepository.findByReportedBy("user1");
+        List<Report> foundReports = reportRepository.findByReportedBy("user123");
 
         // Assert
-        assertThat(result).hasSize(2);
-        assertThat(result).extracting(Report::getReason)
-                .containsExactlyInAnyOrder("Spam", "Inappropriate Content");
+        assertThat(foundReports).hasSize(2);
+        assertThat(foundReports).extracting(Report::getCampaignId).containsExactlyInAnyOrder("camp1", "camp2");
     }
 }
