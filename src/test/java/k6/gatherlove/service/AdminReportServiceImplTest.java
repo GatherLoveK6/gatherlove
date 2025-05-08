@@ -25,35 +25,49 @@ class AdminReportServiceImplTest {
 
     @Test
     void testCreateReport_throwsException() {
-        // Arrange
-
-        // Act & Assert
+        assertThatThrownBy(() ->
+                adminReportService.createReport("camp001", "user1", "spam", null)
+        ).isInstanceOf(UnsupportedOperationException.class)
+                .hasMessageContaining("Admins are not allowed to create reports.");
     }
 
     @Test
     void testViewReports_returnsAllReports() {
-        // Arrange
+        Report report1 = Report.builder().id(1L).campaignId("camp1").reportedBy("user1").createdAt(LocalDateTime.now()).build();
+        Report report2 = Report.builder().id(2L).campaignId("camp2").reportedBy("user2").createdAt(LocalDateTime.now()).build();
 
-        // Act
+        when(reportRepository.findAll()).thenReturn(List.of(report1, report2));
 
-        // Assert
+        List<Report> reports = adminReportService.viewReports("ignored");
+
+        assertThat(reports).containsExactly(report1, report2);
+        verify(reportRepository, times(1)).findAll();
     }
 
     @Test
     void testDeleteReport_deletesById() {
-        // Arrange
+        Long reportId = 10L;
 
-        // Act
+        adminReportService.deleteReport(reportId);
 
-        // Assert
+        verify(reportRepository, times(1)).deleteById(reportId);
     }
 
     @Test
     void testVerifyCampaign_marksReportsAsVerified() {
-        // Arrange
+        Report report1 = Report.builder().id(1L).campaignId("target").verified(false).build();
+        Report report2 = Report.builder().id(2L).campaignId("target").verified(false).build();
+        Report report3 = Report.builder().id(3L).campaignId("other").verified(false).build();
 
-        // Act
+        when(reportRepository.findAll()).thenReturn(List.of(report1, report2, report3));
 
-        // Assert
+        adminReportService.verifyCampaign("target");
+
+        ArgumentCaptor<Report> captor = ArgumentCaptor.forClass(Report.class);
+        verify(reportRepository, times(2)).save(captor.capture());
+
+        List<Report> savedReports = captor.getAllValues();
+        assertThat(savedReports).allMatch(Report::isVerified);
+        assertThat(savedReports).extracting(Report::getCampaignId).containsOnly("target");
     }
 }
