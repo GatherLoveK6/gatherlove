@@ -1,10 +1,13 @@
 package k6.gatherlove.donation.repository;
 
 import k6.gatherlove.donation.model.Donation;
+import org.springframework.stereotype.Repository;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Repository
 public class InMemoryDonationRepository implements DonationRepository {
     private final List<Donation> donations = new ArrayList<>();
 

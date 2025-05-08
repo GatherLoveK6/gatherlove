@@ -2,8 +2,11 @@ package k6.gatherlove.donation.service;
 
 import k6.gatherlove.donation.model.Donation;
 import k6.gatherlove.donation.repository.DonationRepository;
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 
+@Service
 public class DonationServiceImpl implements DonationService {
     public static final double INITIAL_USER_BALANCE = 100.0;
     private double userBalance = INITIAL_USER_BALANCE;
