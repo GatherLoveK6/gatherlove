@@ -34,6 +34,8 @@ public class Campaign {
     private LocalDateTime updatedAt;
     
     private Long userId;
+
+    private String proofFilePath;
     
     @Enumerated(EnumType.STRING)
     private CampaignStatus status;
