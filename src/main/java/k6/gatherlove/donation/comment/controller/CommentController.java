@@ -3,6 +3,7 @@ package k6.gatherlove.donation.comment.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import k6.gatherlove.donation.comment.dto.CommentRequest;
@@ -21,6 +22,7 @@ public class CommentController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)   // returns 201 Created instead of 200 OK
     public Comment addComment(
             @PathVariable String campaignId,
             @RequestBody CommentRequest req

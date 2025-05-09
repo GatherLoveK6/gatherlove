@@ -28,7 +28,7 @@ class CommentControllerTest {
         mvc.perform(post("/donations/campA/comments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
-                .andExpect(status().isOk())                         // ← initially expecting 200 OK
+                .andExpect(status().isCreated())             // expecting 201 Created
                 .andExpect(jsonPath("$.campaignId").value("campA"))
                 .andExpect(jsonPath("$.userId").value("user1"))
                 .andExpect(jsonPath("$.text").value("Great job!"));
@@ -46,9 +46,9 @@ class CommentControllerTest {
         mvc.perform(post("/donations/campB/comments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
-        //  fetch
+        // fetch
         mvc.perform(get("/donations/campB/comments"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].text").value("Nice work!"));
