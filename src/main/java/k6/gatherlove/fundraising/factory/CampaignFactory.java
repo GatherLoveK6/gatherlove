@@ -1,6 +1,7 @@
 package k6.gatherlove.fundraising.factory;
 
 import k6.gatherlove.fundraising.dto.CampaignCreationRequest;
+import k6.gatherlove.fundraising.dto.CampaignUpdateRequest;
 import k6.gatherlove.fundraising.model.Campaign;
 import k6.gatherlove.fundraising.model.CampaignStatus;
 
@@ -23,5 +24,13 @@ public class CampaignFactory {
                 .build();
                 
         return campaign;
+    }
+
+    public static void updateCampaign(Campaign campaign, CampaignUpdateRequest request) {
+        campaign.setTitle(request.getTitle());
+        campaign.setDescription(request.getDescription());
+        campaign.setGoalAmount(request.getGoalAmount());
+        campaign.setDeadline(request.getDeadline());
+        campaign.setUpdatedAt(LocalDateTime.now());
     }
 }
