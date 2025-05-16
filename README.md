@@ -57,7 +57,7 @@ This risk-focused approach helped us design a system that’s not only functiona
 | **Component Diagram Article** | ![ArticleComponent](https://github.com/user-attachments/assets/8bd51c6e-fbb6-45ae-9f1a-3d7eecb20769) |
 | **Code Diagram Article** | ![ArticleCodeDiagram](https://github.com/user-attachments/assets/16d29a6c-4ae6-424f-bc28-5cddf18ec989) | 
 
-### Hafizh
+### Hafizh  
 | Diagram Type         | Image |
 |----------------------|-------|
 | **Container Diagram Authentication** | ![containerdiag](https://github.com/user-attachments/assets/ac8edc48-730a-4c83-95f7-55610fd8a859) |
