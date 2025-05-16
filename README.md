@@ -21,3 +21,11 @@ We used Risk Storming to identify and address possible issues in the Gatherlove 
 By reviewing the system’s architecture through C4 diagrams, we spotted weak points and planned improvements. For example, we added a secure Authentication and Authorization component using JWT to protect user data and restrict access to APIs.
 
 This risk-focused approach helped us design a system that’s not only functional but also secure, reliable, and prepared to handle future growth.
+
+## individual
+### kevin
+| Diagram Type         | Image |
+|----------------------|-------|
+| **Code Diagram Report User**     | ![User](https://github.com/user-attachments/assets/7b18257e-0880-4e58-81ad-83977c60d8f5)|
+| **Code Diagram Report Admin**     | ![Admin](https://github.com/user-attachments/assets/1b522bde-4256-4cfc-9bfb-a73325b4cc83)|
+| **Component Diagram**|![GatherLoveK6 drawio (12)](https://github.com/user-attachments/assets/c0874e77-4ee5-47a4-ba1e-ff7a14bcbf7a)|
