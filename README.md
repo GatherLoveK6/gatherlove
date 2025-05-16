@@ -1,4 +1,4 @@
-![containerDiagram](https://github.com/user-attachments/assets/8df75c17-baf5-44c3-b64d-a11841bb8662)# gatherlove
+# gatherlove
 
 | Diagram Type       | Image |
 |--------------------|-------|
@@ -47,7 +47,12 @@ This risk-focused approach helped us design a system that’s not only functiona
 ### Adien
 | Diagram Type         | Image |
 |----------------------|-------|
-| **Container Diagram Fundraising** | ![donationcontainerdiagram drawio](https://github.com/user-attachments/assets/5abdc6f1-139b-4ab1-84df-26365db659e8)  |
-| **Component Diagram Fundraising API** | ![diagramadpro drawio](https://github.com/user-attachments/assets/d5ae0146-5057-4481-83c1-fb511f5ba906) | 
-| **Code Diagram Fundraising** | ![AAAAdpro drawio](https://github.com/user-attachments/assets/683dbd4b-d40c-4eec-9ee4-775a4c809f4b) |
+| **Container Diagram Donation** | ![donationcontainerdiagram drawio](https://github.com/user-attachments/assets/5abdc6f1-139b-4ab1-84df-26365db659e8)  |
+| **Component Diagram Donation API** | ![diagramadpro drawio](https://github.com/user-attachments/assets/d5ae0146-5057-4481-83c1-fb511f5ba906) | 
+| **Code Diagram Donation** | ![AAAAdpro drawio](https://github.com/user-attachments/assets/683dbd4b-d40c-4eec-9ee4-775a4c809f4b) |
 
+### Ratih
+| Diagram Type         | Image |
+|----------------------|-------|
+| **Component Diagram Article** | ![ArticleComponent](https://github.com/user-attachments/assets/8bd51c6e-fbb6-45ae-9f1a-3d7eecb20769) |
+| **Code Diagram Article** | ![ArticleCodeDiagram](https://github.com/user-attachments/assets/16d29a6c-4ae6-424f-bc28-5cddf18ec989) | 
