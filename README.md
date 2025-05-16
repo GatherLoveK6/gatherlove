@@ -23,16 +23,24 @@ By reviewing the system’s architecture through C4 diagrams, we spotted weak po
 This risk-focused approach helped us design a system that’s not only functional but also secure, reliable, and prepared to handle future growth.
 
 ## individual
-### kevin
+### Kevin
 | Diagram Type         | Image |
 |----------------------|-------|
 | **Code Diagram Report User**     | ![User](https://github.com/user-attachments/assets/7b18257e-0880-4e58-81ad-83977c60d8f5)|
 | **Code Diagram Report Admin**     | ![Admin](https://github.com/user-attachments/assets/1b522bde-4256-4cfc-9bfb-a73325b4cc83)|
 | **Component Diagram**|![GatherLoveK6 drawio (12)](https://github.com/user-attachments/assets/c0874e77-4ee5-47a4-ba1e-ff7a14bcbf7a)|
 
-## individual
 ### Geordie
 | Diagram Type         | Image |
 |----------------------|-------|
 | **Code Diagram Wallet**|![WhatsApp Image 2025-05-16 at 16 14 46](https://github.com/user-attachments/assets/a0a1f839-4dcb-4f15-ba3d-4159867b93df)|
 | **Component Diagram**|![WhatsApp Image 2025-05-16 at 15 22 55](https://github.com/user-attachments/assets/6facbe23-41cb-4218-a38e-3b12e465e9f8)|
+
+### Averill
+| Diagram Type         | Image |
+|----------------------|-------|
+| **Container Diagram Fundraising** | ![GatherLoveK6 drawio (13)](https://github.com/user-attachments/assets/203fd758-49d9-4a10-96fd-0fa89811dc83) |
+| **Component Diagram Fundraising API** | ![GatherLoveK6 drawio (14)](https://github.com/user-attachments/assets/9f57e60b-5cfa-4755-abe3-52506358cae7) | 
+| **Code Diagram Fundraising** | ![GatherLoveK6 drawio (15)](https://github.com/user-attachments/assets/eb2cbe8e-55a4-4964-9d78-44953cbd7da2) |
+
+
