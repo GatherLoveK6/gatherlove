@@ -1,19 +1,17 @@
 package k6.gatherlove.auth.filter;
 
-import k6.gatherlove.auth.util.JwtUtil;
-import k6.gatherlove.auth.repository.UserRepository;
-import k6.gatherlove.auth.model.User;
-import io.jsonwebtoken.Claims;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import k6.gatherlove.auth.util.JwtUtil;                // ← import your util
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
@@ -22,37 +20,30 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
+    protected void doFilterInternal(HttpServletRequest req,
+                                    HttpServletResponse res,
                                     FilterChain chain)
-            throws ServletException, IOException {
+            throws IOException, ServletException {
 
-        String header = request.getHeader("Authorization");
-
-        if (header != null && header.startsWith("Bearer ")) {
-            String token = header.substring(7);
-
-            if (jwtUtil.validateToken(token)) {
-                Claims claims = jwtUtil.getClaims(token);
-                String userId = claims.getSubject();
-
-                User user = userRepository.findById(userId).orElse(null);
-
-                if (user != null) {
-                    var auth = new UsernamePasswordAuthenticationToken(
-                            user,
-                            null,
-                            user.getAuthorities() // assumes User implements UserDetails
-                    );
-                    auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(auth);
+        // 1) extract JWT from cookie
+        String token = null;
+        if (req.getCookies() != null) {
+            for (Cookie c : req.getCookies()) {
+                if ("JWT".equals(c.getName())) {
+                    token = c.getValue();
+                    break;
                 }
             }
         }
 
-        chain.doFilter(request, response);
+        // 2) validate & set Authentication
+        if (token != null && jwtUtil.validateToken(token)) {
+            var auth = jwtUtil.getAuthentication(token);
+            SecurityContextHolder.getContext().setAuthentication(auth);
+        }
+
+        chain.doFilter(req, res);
     }
 }
