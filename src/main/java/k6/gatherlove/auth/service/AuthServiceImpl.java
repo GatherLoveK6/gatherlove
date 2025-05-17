@@ -1,5 +1,7 @@
+// src/main/java/k6/gatherlove/auth/service/AuthServiceImpl.java
 package k6.gatherlove.auth.service;
 
+import k6.gatherlove.auth.model.Role;
 import k6.gatherlove.auth.model.User;
 import k6.gatherlove.auth.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Set;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -28,7 +31,8 @@ public class AuthServiceImpl implements AuthService {
         User user = new User();
         user.setUsername(username);
         user.setPassword(hashPassword(password));
-        user.setRole("ROLE_USER"); // fixed
+        // give new users the USER role:
+        user.setRoles(Set.of(Role.ROLE_USER));
         return userRepository.save(user);
     }
 
