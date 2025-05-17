@@ -57,6 +57,16 @@ This risk-focused approach helped us design a system that’s not only functiona
 | **Component Diagram Article** | ![ArticleComponent](https://github.com/user-attachments/assets/8bd51c6e-fbb6-45ae-9f1a-3d7eecb20769) |
 | **Code Diagram Article** | ![ArticleCodeDiagram](https://github.com/user-attachments/assets/16d29a6c-4ae6-424f-bc28-5cddf18ec989) | 
 
+| Diagram Type         | Image |
+|----------------------|-------|
+| **Component Diagram Admin** | ![AdminComponent](https://github.com/user-attachments/assets/eb59d94e-2188-46c3-a82b-14a9d8a4aa25) |
+| **Code Diagram Admin Announcement** | ![AnnouncementCode](https://github.com/user-attachments/assets/2dc997d0-d05d-401a-9b43-5e4f21a8a0fe) | 
+| **Code Diagram Admin Campaign** | ![CampaignCode](https://github.com/user-attachments/assets/a24f3a78-34f8-4ecd-b777-64b1582f3376) | 
+| **Code Diagram Admin Donation** | ![DonationCode](https://github.com/user-attachments/assets/a1339e9e-73f5-456c-ad58-e90f3c255049) | 
+| **Code Diagram Admin Statistics** | ![StatisticsCode](https://github.com/user-attachments/assets/3eef58ac-ef7e-47f3-b20a-8bfcde6aa366) | 
+| **Code Diagram Admin Transparency** | ![TransparencyCode](https://github.com/user-attachments/assets/7dc58aea-a205-478d-b1c7-84f4c21d9e80) | 
+| **Code Diagram Admin User Management** | ![UserCode](https://github.com/user-attachments/assets/43ef2f29-3b6f-401d-9267-25bf7b2672dc) | 
+
 ### Hafizh  
 | Diagram Type         | Image |
 |----------------------|-------|
