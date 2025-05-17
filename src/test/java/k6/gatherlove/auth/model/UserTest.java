@@ -1,32 +1,60 @@
+// src/test/java/k6/gatherlove/auth/model/UserTest.java
 package k6.gatherlove.auth.model;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.security.core.GrantedAuthority;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.Set;
 
-public class UserTest {
+import static org.assertj.core.api.Assertions.*;
+
+class UserTest {
 
     @Test
-    public void testUserFields() {
-        User user = new User();
-        user.setId(1L);
-        user.setUsername("alice");
-        user.setPassword("securehash");
-        user.setRole(User.Role.USER);
-
-        assertEquals(1L, user.getId());
-        assertEquals("alice", user.getUsername());
-        assertEquals("securehash", user.getPassword());
-        assertEquals(User.Role.USER, user.getRole());
+    void getUsernameReturnsEmail() {
+        User u = User.builder()
+                .email("foo@bar")
+                .password("pw")
+                .roles(Set.of(Role.ROLE_USER))
+                .build();
+        assertThat(u.getUsername()).isEqualTo("foo@bar");
     }
 
     @Test
-    public void testUserConstructor() {
-        User user = new User(2L, "bob", "hash", User.Role.ADMIN);
+    void getPasswordReturnsPassword() {
+        User u = new User();
+        u.setPassword("secret");
+        assertThat(u.getPassword()).isEqualTo("secret");
+    }
 
-        assertEquals(2L, user.getId());
-        assertEquals("bob", user.getUsername());
-        assertEquals("hash", user.getPassword());
-        assertEquals(User.Role.ADMIN, user.getRole());
+    @Test
+    void authoritiesMatchRoles() {
+        User u = User.builder()
+                .email("e")
+                .password("p")
+                .roles(Set.of(Role.ROLE_USER, Role.ROLE_ADMIN))
+                .build();
+
+        // compare on the authority strings, not the objects themselves
+        assertThat(u.getAuthorities())
+                .extracting(GrantedAuthority::getAuthority)
+                .containsExactlyInAnyOrder("ROLE_USER", "ROLE_ADMIN");
+    }
+
+    @Test
+    void defaultRolesEmpty() {
+        User u = new User();
+        // builder default ensures roles != null
+        assertThat(u.getRoles()).isNotNull().isEmpty();
+        assertThat(u.getAuthorities()).isEmpty();
+    }
+
+    @Test
+    void accountFlagsAreAllTrue() {
+        User u = new User();
+        assertThat(u.isAccountNonExpired()).isTrue();
+        assertThat(u.isAccountNonLocked()).isTrue();
+        assertThat(u.isCredentialsNonExpired()).isTrue();
+        assertThat(u.isEnabled()).isTrue();
     }
 }
