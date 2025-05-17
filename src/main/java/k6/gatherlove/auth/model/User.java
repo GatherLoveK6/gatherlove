@@ -6,16 +6,13 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Entity
-@Table(name = "users")
-@Getter
-@Setter
-@NoArgsConstructor
+@Table(name="users")
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class User implements UserDetails {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
@@ -30,42 +27,32 @@ public class User implements UserDetails {
     private String username;
 
     private String phone;
+    private String address;
 
     @Column(nullable = false)
     private String password;
 
-    private String address;
-
-    @Column(nullable = false)
-    private String role; // e.g. "ROLE_USER" or "ROLE_ADMIN"
-
-    // --- UserDetails methods ---
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name="user_roles", joinColumns=@JoinColumn(name="user_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name="role")
+    @Builder.Default
+    private Set<Role> roles = new HashSet<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role));
+        return roles.stream()
+                .map(r -> new SimpleGrantedAuthority(r.name()))
+                .collect(Collectors.toSet());
     }
 
     @Override
     public String getUsername() {
-        return username; // Use username here instead of email
+        return email;   // we’ll use email as the principal
     }
-
+    @Override public String getPassword()               { return password; }
     @Override public boolean isAccountNonExpired()     { return true; }
     @Override public boolean isAccountNonLocked()      { return true; }
     @Override public boolean isCredentialsNonExpired() { return true; }
     @Override public boolean isEnabled()               { return true; }
-
-    // Optional: custom constructor for full user creation
-    public User(String id, String fullName, String email, String username,
-                String phone, String password, String address, String role) {
-        this.id = id;
-        this.fullName = fullName;
-        this.email = email;
-        this.username = username;
-        this.phone = phone;
-        this.password = password;
-        this.address = address;
-        this.role = role;
-    }
 }
