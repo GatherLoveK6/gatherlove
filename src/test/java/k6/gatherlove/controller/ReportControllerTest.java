@@ -6,10 +6,10 @@ import k6.gatherlove.model.Report;
 import k6.gatherlove.service.ReportService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -32,17 +32,20 @@ class ReportControllerTest {
         ReportRequestDTO request = new ReportRequestDTO();
         request.setCampaignId("camp1");
         request.setUserId("user1");
-        request.setReason("spam");
-        request.setEvidenceUrl("evidence.com");
+        request.setTitle("Title");
+        request.setDescription("Description");
+        request.setViolationType("spam");
+
         Report expectedReport = Report.builder()
                 .campaignId("camp1")
                 .reportedBy("user1")
-                .reason("spam")
-                .evidenceUrl("evidence.com")
+                .title("Title")
+                .description("Description")
+                .violationType("spam")
                 .build();
 
         when(reportServiceFactory.getReportAction("USER")).thenReturn(reportService);
-        when(reportService.createReport("camp1", "user1", "spam", "evidence.com")).thenReturn(expectedReport);
+        when(reportService.createReport("camp1", "user1", "Title", "Description", "spam")).thenReturn(expectedReport);
 
         ResponseEntity<Report> response = reportController.createReport(request);
 
@@ -82,11 +85,12 @@ class ReportControllerTest {
 
     @Test
     void testDeleteReport_delegatesToService() {
+        UUID reportId = UUID.randomUUID();
         when(reportServiceFactory.getReportAction("ADMIN")).thenReturn(reportService);
 
-        ResponseEntity<Void> response = reportController.deleteReport(1L, "ADMIN");
+        ResponseEntity<Void> response = reportController.deleteReport(reportId, "ADMIN");
 
-        verify(reportService, times(1)).deleteReport(1L);
+        verify(reportService, times(1)).deleteReport(reportId);
         assertThat(response.getStatusCodeValue()).isEqualTo(204);
     }
 
