@@ -1,13 +1,15 @@
 package k6.gatherlove.service;
 
 import k6.gatherlove.model.Report;
+import k6.gatherlove.repository.ReportRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-import k6.gatherlove.repository.ReportRepository;
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -26,37 +28,59 @@ class UserReportServiceTest {
     @Test
     void testCreateReport() {
         Report dummyReport = Report.builder()
-                .id(1L)
+                .id(UUID.randomUUID())
                 .campaignId("CAMPAIGN1")
                 .reportedBy("USER1")
-                .reason("Violation of rules")
-                .evidenceUrl("http://evidence.com/img.jpg")
+                .title("Violation Title")
+                .description("Violation description")
+                .violationType("FRAUD")
                 .createdAt(LocalDateTime.now())
                 .verified(false)
                 .build();
 
         when(reportRepository.save(any(Report.class))).thenReturn(dummyReport);
 
-        Report created = userReportAction.createReport("CAMPAIGN1", "USER1", "Violation of rules", "http://evidence.com/img.jpg");
+        Report created = userReportAction.createReport("CAMPAIGN1", "USER1", "Violation Title", "Violation description", "FRAUD");
         assertNotNull(created);
-        assertEquals("Violation of rules", created.getReason());
+        assertEquals("Violation Title", created.getTitle());
+        assertEquals("Violation description", created.getDescription());
+        assertEquals("FRAUD", created.getViolationType());
         verify(reportRepository, times(1)).save(any(Report.class));
     }
 
     @Test
     void testViewReports() {
-        Report report1 = Report.builder().id(1L).reportedBy("USER1").build();
-        Report report2 = Report.builder().id(2L).reportedBy("USER1").build();
+        Report report1 = Report.builder()
+                .id(UUID.randomUUID())
+                .reportedBy("USER1")
+                .title("Title1")
+                .description("Desc1")
+                .violationType("SPAM")
+                .createdAt(LocalDateTime.now())
+                .verified(false)
+                .build();
+
+        Report report2 = Report.builder()
+                .id(UUID.randomUUID())
+                .reportedBy("USER1")
+                .title("Title2")
+                .description("Desc2")
+                .violationType("FRAUD")
+                .createdAt(LocalDateTime.now())
+                .verified(false)
+                .build();
+
         when(reportRepository.findByReportedBy("USER1")).thenReturn(Arrays.asList(report1, report2));
 
         List<Report> reports = userReportAction.viewReports("USER1");
         assertEquals(2, reports.size());
+        assertEquals("USER1", reports.get(0).getReportedBy());
     }
 
     @Test
     void testDeleteReportThrowsException() {
         Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
-            userReportAction.deleteReport(1L);
+            userReportAction.deleteReport(UUID.randomUUID());
         });
         String expectedMessage = "Users are not allowed to delete reports.";
         assertTrue(exception.getMessage().contains(expectedMessage));
@@ -72,22 +96,21 @@ class UserReportServiceTest {
     }
 
     @Test
-    void testCreateReportWithNullReason() {
+    void testCreateReportWithNullDescription() {
         Report dummy = Report.builder()
-                .id(2L)
+                .id(UUID.randomUUID())
                 .campaignId("CAMPX")
                 .reportedBy("USR2")
-                .reason(null)
-                .evidenceUrl("http://evidence.com/image.png")
+                .title("Missing Description")
+                .description(null)
+                .violationType("SPAM")
                 .createdAt(LocalDateTime.now())
                 .verified(false)
                 .build();
 
         when(reportRepository.save(any())).thenReturn(dummy);
 
-        Report created = userReportAction.createReport("CAMPX", "USR2", null, "http://evidence.com/image.png");
-        assertNull(created.getReason());
+        Report created = userReportAction.createReport("CAMPX", "USR2", "Missing Description", null, "SPAM");
+        assertNull(created.getDescription());
     }
-
 }
-
