@@ -1,5 +1,6 @@
-package k6.gatherlove.model;
+package k6.gatherlove.report.model;
 
+import k6.gatherlove.report.model.Report;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;

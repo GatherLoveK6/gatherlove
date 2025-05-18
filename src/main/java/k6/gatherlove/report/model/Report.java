@@ -1,4 +1,4 @@
-package k6.gatherlove.model;
+package k6.gatherlove.report.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

@@ -1,6 +1,6 @@
-package k6.gatherlove.repository;
+package k6.gatherlove.report.repository;
 
-import k6.gatherlove.model.Report;
+import k6.gatherlove.report.model.Report;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.UUID;

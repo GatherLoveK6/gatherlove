@@ -1,9 +1,10 @@
-package k6.gatherlove.controller;
+package k6.gatherlove.report.controller;
 
-import k6.gatherlove.dto.ReportRequestDTO;
-import k6.gatherlove.factory.ReportServiceFactory;
-import k6.gatherlove.model.Report;
-import k6.gatherlove.service.ReportService;
+import k6.gatherlove.report.controller.ReportController;
+import k6.gatherlove.report.dto.ReportRequestDTO;
+import k6.gatherlove.report.factory.ReportServiceFactory;
+import k6.gatherlove.report.model.Report;
+import k6.gatherlove.report.service.ReportService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;

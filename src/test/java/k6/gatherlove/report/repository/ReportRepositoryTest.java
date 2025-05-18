@@ -1,6 +1,7 @@
-package k6.gatherlove.repository;
+package k6.gatherlove.report.repository;
 
-import k6.gatherlove.model.Report;
+import k6.gatherlove.report.model.Report;
+import k6.gatherlove.report.repository.ReportRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

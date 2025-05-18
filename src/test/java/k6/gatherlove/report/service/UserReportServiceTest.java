@@ -1,7 +1,8 @@
-package k6.gatherlove.service;
+package k6.gatherlove.report.service;
 
-import k6.gatherlove.model.Report;
-import k6.gatherlove.repository.ReportRepository;
+import k6.gatherlove.report.model.Report;
+import k6.gatherlove.report.service.UserReportServiceImpl;
+import k6.gatherlove.report.repository.ReportRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

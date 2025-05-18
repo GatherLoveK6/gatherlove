@@ -1,6 +1,6 @@
-package k6.gatherlove.service;
+package k6.gatherlove.report.service;
 
-import k6.gatherlove.model.Report;
+import k6.gatherlove.report.model.Report;
 import java.util.List;
 import java.util.UUID;
 

@@ -1,4 +1,4 @@
-package k6.gatherlove.dto;
+package k6.gatherlove.report.dto;
 
 import lombok.Getter;
 import lombok.Setter;
