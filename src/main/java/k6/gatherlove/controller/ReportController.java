@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/reports")
@@ -25,8 +26,10 @@ public class ReportController {
         Report report = action.createReport(
                 request.getCampaignId(),
                 request.getUserId(),
-                request.getReason(),
-                request.getEvidenceUrl()
+                request.getTitle(),
+                request.getDescription(),
+                request.getViolationType()
+
         );
         return ResponseEntity.ok(report);
     }
@@ -47,7 +50,7 @@ public class ReportController {
 
 
     @DeleteMapping("/{reportId}")
-    public ResponseEntity<Void> deleteReport(@PathVariable Long reportId,
+    public ResponseEntity<Void> deleteReport(@PathVariable UUID reportId,
                                              @RequestParam("role") String role) {
         ReportService action = reportServiceFactory.getReportAction(role);
         action.deleteReport(reportId);
