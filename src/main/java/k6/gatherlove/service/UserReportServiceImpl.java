@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class UserReportServiceImpl implements ReportService {
@@ -17,17 +18,16 @@ public class UserReportServiceImpl implements ReportService {
     }
 
     @Override
-    public Report createReport(String campaignId, String userId, String reason, String evidenceUrl) {
-        // Create a new report from user input
+    public Report createReport(String campaignId, String userId, String title, String description, String violationType) {
         Report report = Report.builder()
                 .campaignId(campaignId)
                 .reportedBy(userId)
-                .reason(reason)
-                .evidenceUrl(evidenceUrl)
+                .title(title)
+                .description(description)
+                .violationType(violationType)
                 .createdAt(LocalDateTime.now())
                 .verified(false)
                 .build();
-        // Here you could also add logic to notify the Admin, if desired.
         return reportRepository.save(report);
     }
 
@@ -38,7 +38,7 @@ public class UserReportServiceImpl implements ReportService {
     }
 
     @Override
-    public void deleteReport(Long reportId) {
+    public void deleteReport(UUID reportId) {
         // Users are not allowed to delete reports
         throw new UnsupportedOperationException("Users are not allowed to delete reports.");
     }
