@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GatherLove Report Manager</title>
+</head>
+<body>
+<h1>GatherLove Report Feature</h1>
+
+<!-- Create Report -->
+<h2>Create Report</h2>
+<form id="createForm">
+    <input type="text" id="createUserId" placeholder="User ID" required><br>
+    <input type="text" id="createCampaignId" placeholder="Campaign ID" required><br>
+    <input type="text" id="createTitle" placeholder="Title" required><br>
+    <textarea id="createDescription" placeholder="Description" required></textarea><br>
+
+    <select id="createViolationType" required>
+        <option value="Fraud">Fraud</option>
+        <option value="Inappropriate Content">Inappropriate Content</option>
+        <option value="Spam">Spam</option>
+        <option value="Other">Other</option>
+    </select><br>
+
+    <button type="submit">Create Report</button>
+</form>
+
+<hr>
+
+<!-- Get Reports -->
+<h2>Get Reports</h2>
+<input type="text" id="getUserId" placeholder="User ID (optional if ADMIN)">
+<input type="text" id="getRole" placeholder="Role (e.g. USER or ADMIN)" required>
+<button onclick="getReports()">Fetch Reports</button>
+<div id="reportsOutput"></div>
+
+<hr>
+
+<!-- Verify Campaign -->
+<h2>Verify Campaign</h2>
+<input type="text" id="verifyCampaignId" placeholder="Campaign ID to verify" required>
+<input type="text" id="verifyRole" placeholder="Role (e.g. ADMIN)" required>
+<button onclick="verifyCampaign()">Verify</button>
+<div id="verifyOutput"></div>
+
+<script>
+    // CREATE REPORT
+    document.getElementById("createForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const payload = {
+            userId: document.getElementById("createUserId").value,
+            campaignId: document.getElementById("createCampaignId").value,
+            title: document.getElementById("createTitle").value,
+            description: document.getElementById("createDescription").value,
+            violationType: document.getElementById("createViolationType").value
+        };
+
+        const response = await fetch("/api/reports", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        alert(await response.text());
+    });
+
+    // GET REPORTS (AND ENABLE DELETE FOR ADMIN)
+    async function getReports() {
+        const userId = document.getElementById("getUserId").value.trim();
+        const role = document.getElementById("getRole").value.trim().toUpperCase();
+
+        let url = `/api/reports?role=${encodeURIComponent(role)}`;
+        if (role === "USER" && userId) {
+            url += `&userId=${encodeURIComponent(userId)}`;
+        }
+
+        const response = await fetch(url);
+        const container = document.getElementById("reportsOutput");
+        container.innerHTML = "";
+
+        if (!response.ok) {
+            container.innerText = "Error fetching reports.";
+            return;
+        }
+
+        const reports = await response.json();
+        if (reports.length === 0) {
+            container.innerText = "No reports found.";
+            return;
+        }
+
+        reports.forEach(r => {
+            const div = document.createElement("div");
+
+            // Build content
+            div.innerHTML = `
+            <strong>Report ID:</strong> ${r.id}<br>
+            <strong>Reported by:</strong> ${r.reportedBy}<br>
+            <strong>Campaign:</strong> ${r.campaignId}<br>
+            <strong>Type:</strong> ${r.violationType}<br>
+            <strong>Title:</strong> ${r.title}<br>
+            <strong>Description:</strong> ${r.description || "None"}<br>
+            <strong>Created at:</strong> ${r.createdAt}<br>
+            <strong>Verified:</strong> ${r.verified ? "✅ Yes" : "❌ No"}<br>
+
+        `;
+
+            // Add delete button for ADMIN
+            if (role === "ADMIN") {
+                const deleteBtn = document.createElement("button");
+                deleteBtn.innerText = "Delete";
+                deleteBtn.onclick = async () => {
+                    const confirmDelete = confirm(`Delete report ID ${r.id}?`);
+                    if (!confirmDelete) return;
+
+                    const delRes = await fetch(`/api/reports/${r.id}?role=ADMIN`, { method: "DELETE" });
+                    if (delRes.ok) {
+                        alert("Deleted report ID " + r.id);
+                        getReports(); // Refresh the list
+                    } else {
+                        alert("Failed to delete report.");
+                    }
+                };
+                div.appendChild(deleteBtn);
+            }
+
+            // Append <hr> as element instead of using innerHTML
+            const hr = document.createElement("hr");
+            div.appendChild(hr);
+
+            container.appendChild(div);
+        });
+    }
+
+
+    // VERIFY CAMPAIGN
+    async function verifyCampaign() {
+        const campaignId = document.getElementById("verifyCampaignId").value.trim();
+        const role = document.getElementById("verifyRole").value.trim().toUpperCase();
+
+        const response = await fetch(`/api/reports/campaigns/${campaignId}/verify?role=${encodeURIComponent(role)}`, {
+            method: "PUT"
+        });
+
+        const result = await response.text();
+        document.getElementById("verifyOutput").innerText = result;
+    }
+</script>
+</body>
+</html>
