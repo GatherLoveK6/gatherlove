@@ -8,8 +8,10 @@ import org.mockito.ArgumentCaptor;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 class AdminReportServiceImplTest {
@@ -26,15 +28,34 @@ class AdminReportServiceImplTest {
     @Test
     void testCreateReport_throwsException() {
         assertThatThrownBy(() ->
-                adminReportService.createReport("camp001", "user1", "spam", null)
+                adminReportService.createReport("camp001", "user1", "Spam Title", "Spam content", "SPAM")
         ).isInstanceOf(UnsupportedOperationException.class)
                 .hasMessageContaining("Admins are not allowed to create reports.");
     }
 
     @Test
     void testViewReports_returnsAllReports() {
-        Report report1 = Report.builder().id(1L).campaignId("camp1").reportedBy("user1").createdAt(LocalDateTime.now()).build();
-        Report report2 = Report.builder().id(2L).campaignId("camp2").reportedBy("user2").createdAt(LocalDateTime.now()).build();
+        Report report1 = Report.builder()
+                .id(UUID.randomUUID())
+                .campaignId("camp1")
+                .reportedBy("user1")
+                .title("t1")
+                .description("d1")
+                .violationType("SPAM")
+                .createdAt(LocalDateTime.now())
+                .verified(false)
+                .build();
+
+        Report report2 = Report.builder()
+                .id(UUID.randomUUID())
+                .campaignId("camp2")
+                .reportedBy("user2")
+                .title("t2")
+                .description("d2")
+                .violationType("FRAUD")
+                .createdAt(LocalDateTime.now())
+                .verified(false)
+                .build();
 
         when(reportRepository.findAll()).thenReturn(List.of(report1, report2));
 
@@ -46,7 +67,7 @@ class AdminReportServiceImplTest {
 
     @Test
     void testDeleteReport_deletesById() {
-        Long reportId = 10L;
+        UUID reportId = UUID.randomUUID();
 
         adminReportService.deleteReport(reportId);
 
@@ -55,9 +76,35 @@ class AdminReportServiceImplTest {
 
     @Test
     void testVerifyCampaign_marksReportsAsVerified() {
-        Report report1 = Report.builder().id(1L).campaignId("target").verified(false).build();
-        Report report2 = Report.builder().id(2L).campaignId("target").verified(false).build();
-        Report report3 = Report.builder().id(3L).campaignId("other").verified(false).build();
+        Report report1 = Report.builder()
+                .id(UUID.randomUUID())
+                .campaignId("target")
+                .title("t1")
+                .description("d1")
+                .violationType("SPAM")
+                .createdAt(LocalDateTime.now())
+                .verified(false)
+                .build();
+
+        Report report2 = Report.builder()
+                .id(UUID.randomUUID())
+                .campaignId("target")
+                .title("t2")
+                .description("d2")
+                .violationType("FRAUD")
+                .createdAt(LocalDateTime.now())
+                .verified(false)
+                .build();
+
+        Report report3 = Report.builder()
+                .id(UUID.randomUUID())
+                .campaignId("other")
+                .title("t3")
+                .description("d3")
+                .violationType("SCAM")
+                .createdAt(LocalDateTime.now())
+                .verified(false)
+                .build();
 
         when(reportRepository.findAll()).thenReturn(List.of(report1, report2, report3));
 
@@ -67,6 +114,7 @@ class AdminReportServiceImplTest {
         verify(reportRepository, times(2)).save(captor.capture());
 
         List<Report> savedReports = captor.getAllValues();
+
         assertThat(savedReports).allMatch(Report::isVerified);
         assertThat(savedReports).extracting(Report::getCampaignId).containsOnly("target");
     }
