@@ -11,7 +11,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
 
+import java.util.UUID;
 import java.time.LocalDateTime;
 
 @Entity
@@ -24,8 +26,10 @@ import java.time.LocalDateTime;
 public class Report {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @Column(name = "id", updatable = false, nullable = false)
+    private UUID id;
 
     // Stores the campaign identifier that is being reported.
     @Column(name = "campaign_id", nullable = false)
@@ -35,13 +39,14 @@ public class Report {
     @Column(name = "reported_by", nullable = false)
     private String reportedBy;
 
-    // Reason for the report.
-    @Column(nullable = false, length = 500)
-    private String reason;
+    @Column(nullable = false)
+    private String title;
 
-    // URL of the optional evidence.
-    @Column(name = "evidence_url", length = 1000)
-    private String evidenceUrl;
+    @Column(nullable = false, length = 1000)
+    private String description;
+
+    @Column(name = "violation_type", nullable = false)
+    private String violationType;
 
     // Date and time the report was created.
     @Column(name = "created_at", nullable = false)
