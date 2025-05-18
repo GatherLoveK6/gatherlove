@@ -6,8 +6,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
-import java.util.List;
 import java.time.LocalDateTime;
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
@@ -23,22 +24,31 @@ class ReportRepositoryTest {
         Report report1 = Report.builder()
                 .campaignId("camp1")
                 .reportedBy("user123")
-                .reason("reason 1")
+                .title("Title 1")
+                .description("Description 1")
+                .violationType("SPAM")
                 .createdAt(LocalDateTime.now())
+                .verified(false)
                 .build();
 
         Report report2 = Report.builder()
                 .campaignId("camp2")
                 .reportedBy("user123")
-                .reason("inappropriate")
+                .title("Title 2")
+                .description("Description 2")
+                .violationType("FRAUD")
                 .createdAt(LocalDateTime.now())
+                .verified(false)
                 .build();
 
         Report report3 = Report.builder()
                 .campaignId("camp3")
                 .reportedBy("otherUser")
-                .reason("scam")
+                .title("Title 3")
+                .description("Description 3")
+                .violationType("SCAM")
                 .createdAt(LocalDateTime.now())
+                .verified(true)
                 .build();
 
         reportRepository.saveAll(List.of(report1, report2, report3));
@@ -48,6 +58,8 @@ class ReportRepositoryTest {
 
         // Assert
         assertThat(foundReports).hasSize(2);
-        assertThat(foundReports).extracting(Report::getCampaignId).containsExactlyInAnyOrder("camp1", "camp2");
+        assertThat(foundReports)
+                .extracting(Report::getCampaignId)
+                .containsExactlyInAnyOrder("camp1", "camp2");
     }
 }
