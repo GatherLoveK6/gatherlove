@@ -34,6 +34,9 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    implementation ("org.postgresql:postgresql:42.5.0")
+    implementation ("org.springframework.boot:spring-boot-starter-data-jpa")
+    runtimeOnly   ("org.postgresql:postgresql")
 }
 
 tasks.withType<Test> {
