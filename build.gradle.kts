@@ -72,6 +72,9 @@ dependencies {
     testImplementation("org.hibernate.validator:hibernate-validator:8.0.0.Final")
     testImplementation("org.springframework.security:spring-security-test")
 
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
 }
 
 
