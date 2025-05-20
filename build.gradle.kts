@@ -37,6 +37,7 @@ dependencies {
     implementation ("org.postgresql:postgresql:42.5.0")
     implementation ("org.springframework.boot:spring-boot-starter-data-jpa")
     runtimeOnly   ("org.postgresql:postgresql")
+    testImplementation ("com.h2database:h2")
 }
 
 tasks.withType<Test> {
