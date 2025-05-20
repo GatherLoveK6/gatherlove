@@ -73,6 +73,7 @@ dependencies {
 
     // ─── Database Driver ────────────────────────────────────────────────────────
     implementation("org.postgresql:postgresql")
+    testImplementation("com.h2database:h2")
 
     // ─── Annotation Processing / Lombok ────────────────────────────────────────
     compileOnly("org.projectlombok:lombok")
