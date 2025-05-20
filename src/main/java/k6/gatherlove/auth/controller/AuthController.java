@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -55,18 +56,27 @@ public class AuthController {
         }
     }
 
+    // ——— THIS IS WHAT MATTERS FOR REGISTER ———
     @GetMapping("/register")
-    public String showRegister() {
+    public String showRegister(Model model) {
+        // if we're coming to the form *after* a redirect with errors,
+        // Spring will have already flash-added "registerDto" and "errors".
+        // But on a *fresh* GET we need to supply an empty one.
+        if (!model.containsAttribute("registerDto")) {
+            model.addAttribute("registerDto", new RegisterUserRequest());
+        }
         return "auth/register";
     }
 
     @PostMapping("/register")
     public String register(
-            @ModelAttribute @Valid RegisterUserRequest req,
+            @ModelAttribute("registerDto") @Valid RegisterUserRequest req,
             BindingResult binding,
             RedirectAttributes redirectAttrs
     ) {
         if (binding.hasErrors()) {
+            // re-flash both the bean and its errors
+            redirectAttrs.addFlashAttribute("registerDto", req);
             redirectAttrs.addFlashAttribute("errors", binding.getAllErrors());
             return "redirect:/auth/register";
         }
@@ -75,11 +85,9 @@ public class AuthController {
         return "redirect:/auth/login";
     }
 
-    // ← new logout endpoint
     @GetMapping("/logout")
     public String logout(HttpServletResponse response,
                          RedirectAttributes redirectAttrs) {
-        // expire the JWT cookie immediately
         ResponseCookie cookie = ResponseCookie.from("JWT", "")
                 .httpOnly(true)
                 .secure(false)
@@ -87,7 +95,6 @@ public class AuthController {
                 .maxAge(0)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-
         redirectAttrs.addFlashAttribute("message", "You’ve been logged out.");
         return "redirect:/auth/login";
     }
