@@ -1,5 +1,6 @@
 package k6.gatherlove.report.controller;
 
+import k6.gatherlove.enums.Role;
 import k6.gatherlove.report.dto.ReportRequestDTO;
 import k6.gatherlove.report.factory.ReportServiceFactory;
 import k6.gatherlove.report.model.Report;
@@ -22,25 +23,24 @@ public class ReportController {
 
     @PostMapping
     public ResponseEntity<Report> createReport(@RequestBody ReportRequestDTO request) {
-        ReportService action = reportServiceFactory.getReportAction("USER");
+        ReportService action = reportServiceFactory.getReportAction(Role.USER);
         Report report = action.createReport(
                 request.getCampaignId(),
                 request.getUserId(),
                 request.getTitle(),
                 request.getDescription(),
                 request.getViolationType()
-
         );
         return ResponseEntity.ok(report);
     }
 
     @GetMapping
-    public ResponseEntity<List<Report>> getReports(@RequestParam("role") String role,
+    public ResponseEntity<List<Report>> getReports(@RequestParam("role") Role role,
                                                    @RequestParam(value = "userId", required = false) String userId) {
         ReportService action = reportServiceFactory.getReportAction(role);
 
-        if ("ADMIN".equalsIgnoreCase(role)) {
-            return ResponseEntity.ok(action.viewReports(null)); // ignored inside admin implementation
+        if (role == Role.ADMIN) {
+            return ResponseEntity.ok(action.viewReports(null)); // ignored in admin impl
         } else if (userId != null) {
             return ResponseEntity.ok(action.viewReports(userId));
         } else {
@@ -48,10 +48,9 @@ public class ReportController {
         }
     }
 
-
     @DeleteMapping("/{reportId}")
     public ResponseEntity<Void> deleteReport(@PathVariable UUID reportId,
-                                             @RequestParam("role") String role) {
+                                             @RequestParam("role") Role role) {
         ReportService action = reportServiceFactory.getReportAction(role);
         action.deleteReport(reportId);
         return ResponseEntity.noContent().build();
@@ -59,10 +58,9 @@ public class ReportController {
 
     @PutMapping("/campaigns/{campaignId}/verify")
     public ResponseEntity<String> verifyCampaign(@PathVariable String campaignId,
-                                                 @RequestParam("role") String role) {
+                                                 @RequestParam("role") Role role) {
         ReportService action = reportServiceFactory.getReportAction(role);
         action.verifyCampaign(campaignId);
         return ResponseEntity.ok("Campaign verified successfully.");
     }
 }
-

@@ -11,7 +11,7 @@
 <h2>Create Report</h2>
 <form id="createForm">
     <input type="text" id="createUserId" placeholder="User ID" required><br>
-    <input type="text" id="createCampaignId" placeholder="Campaign ID" required><br>
+    <input type="text" id="createCampaignId" placeholder="Campaign" required><br>
     <input type="text" id="createTitle" placeholder="Title" required><br>
     <textarea id="createDescription" placeholder="Description" required></textarea><br>
 
@@ -38,7 +38,7 @@
 
 <!-- Verify Campaign -->
 <h2>Verify Campaign</h2>
-<input type="text" id="verifyCampaignId" placeholder="Campaign ID to verify" required>
+<input type="text" id="verifyCampaignId" placeholder="Campaign to verify" required>
 <input type="text" id="verifyRole" placeholder="Role (e.g. ADMIN)" required>
 <button onclick="verifyCampaign()">Verify</button>
 <div id="verifyOutput"></div>
@@ -65,7 +65,7 @@
         alert(await response.text());
     });
 
-    // GET REPORTS (AND ENABLE DELETE FOR ADMIN)
+    // GET REPORTS - Grouped by campaignId
     async function getReports() {
         const userId = document.getElementById("getUserId").value.trim();
         const role = document.getElementById("getRole").value.trim().toUpperCase();
@@ -90,49 +90,58 @@
             return;
         }
 
-        reports.forEach(r => {
-            const div = document.createElement("div");
-
-            // Build content
-            div.innerHTML = `
-            <strong>Report ID:</strong> ${r.id}<br>
-            <strong>Reported by:</strong> ${r.reportedBy}<br>
-            <strong>Campaign:</strong> ${r.campaignId}<br>
-            <strong>Type:</strong> ${r.violationType}<br>
-            <strong>Title:</strong> ${r.title}<br>
-            <strong>Description:</strong> ${r.description || "None"}<br>
-            <strong>Created at:</strong> ${r.createdAt}<br>
-            <strong>Verified:</strong> ${r.verified ? "✅ Yes" : "❌ No"}<br>
-
-        `;
-
-            // Add delete button for ADMIN
-            if (role === "ADMIN") {
-                const deleteBtn = document.createElement("button");
-                deleteBtn.innerText = "Delete";
-                deleteBtn.onclick = async () => {
-                    const confirmDelete = confirm(`Delete report ID ${r.id}?`);
-                    if (!confirmDelete) return;
-
-                    const delRes = await fetch(`/api/reports/${r.id}?role=ADMIN`, { method: "DELETE" });
-                    if (delRes.ok) {
-                        alert("Deleted report ID " + r.id);
-                        getReports(); // Refresh the list
-                    } else {
-                        alert("Failed to delete report.");
-                    }
-                };
-                div.appendChild(deleteBtn);
+        // Group reports by campaignId
+        const grouped = {};
+        for (const r of reports) {
+            if (!grouped[r.campaignId]) {
+                grouped[r.campaignId] = [];
             }
+            grouped[r.campaignId].push(r);
+        }
 
-            // Append <hr> as element instead of using innerHTML
-            const hr = document.createElement("hr");
-            div.appendChild(hr);
+        // Render each group
+        Object.entries(grouped).forEach(([campaignId, reports]) => {
+            const groupDiv = document.createElement("div");
+            groupDiv.innerHTML = `<h3>Campaign: ${campaignId}</h3>`;
 
-            container.appendChild(div);
+            reports.forEach(r => {
+                const div = document.createElement("div");
+                div.innerHTML = `
+                    <strong>Report ID:</strong> ${r.id}<br>
+                    <strong>Reported by:</strong> ${r.reportedBy}<br>
+                    <strong>Type:</strong> ${r.violationType}<br>
+                    <strong>Title:</strong> ${r.title}<br>
+                    <strong>Description:</strong> ${r.description || "None"}<br>
+                    <strong>Created at:</strong> ${r.createdAt}<br>
+                    <strong>Verified:</strong> ${r.verified ? "✅ Yes" : "❌ No"}<br>
+                `;
+
+                if (role === "ADMIN") {
+                    const deleteBtn = document.createElement("button");
+                    deleteBtn.innerText = "Delete";
+                    deleteBtn.onclick = async () => {
+                        const confirmDelete = confirm(`Delete report ID ${r.id}?`);
+                        if (!confirmDelete) return;
+
+                        const delRes = await fetch(`/api/reports/${r.id}?role=ADMIN`, { method: "DELETE" });
+                        if (delRes.ok) {
+                            alert("Deleted report ID " + r.id);
+                            getReports(); // Refresh the list
+                        } else {
+                            alert("Failed to delete report.");
+                        }
+                    };
+                    div.appendChild(deleteBtn);
+                }
+
+                const hr = document.createElement("hr");
+                div.appendChild(hr);
+                groupDiv.appendChild(div);
+            });
+
+            container.appendChild(groupDiv);
         });
     }
-
 
     // VERIFY CAMPAIGN
     async function verifyCampaign() {

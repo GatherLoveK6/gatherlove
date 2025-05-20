@@ -1,6 +1,6 @@
 package k6.gatherlove.report.controller;
 
-import k6.gatherlove.report.controller.ReportController;
+import k6.gatherlove.enums.Role;
 import k6.gatherlove.report.dto.ReportRequestDTO;
 import k6.gatherlove.report.factory.ReportServiceFactory;
 import k6.gatherlove.report.model.Report;
@@ -45,7 +45,7 @@ class ReportControllerTest {
                 .violationType("spam")
                 .build();
 
-        when(reportServiceFactory.getReportAction("USER")).thenReturn(reportService);
+        when(reportServiceFactory.getReportAction(Role.USER)).thenReturn(reportService);
         when(reportService.createReport("camp1", "user1", "Title", "Description", "spam")).thenReturn(expectedReport);
 
         ResponseEntity<Report> response = reportController.createReport(request);
@@ -57,10 +57,10 @@ class ReportControllerTest {
     @Test
     void testGetReports_adminRole_returnsAllReports() {
         Report report = Report.builder().campaignId("camp1").reportedBy("admin").build();
-        when(reportServiceFactory.getReportAction("ADMIN")).thenReturn(reportService);
+        when(reportServiceFactory.getReportAction(Role.ADMIN)).thenReturn(reportService);
         when(reportService.viewReports(null)).thenReturn(List.of(report));
 
-        ResponseEntity<List<Report>> response = reportController.getReports("ADMIN", null);
+        ResponseEntity<List<Report>> response = reportController.getReports(Role.ADMIN, null);
 
         assertThat(response.getBody()).containsExactly(report);
         assertThat(response.getStatusCodeValue()).isEqualTo(200);
@@ -69,10 +69,10 @@ class ReportControllerTest {
     @Test
     void testGetReports_userRoleWithUserId_returnsUserReports() {
         Report report = Report.builder().campaignId("camp2").reportedBy("user123").build();
-        when(reportServiceFactory.getReportAction("USER")).thenReturn(reportService);
+        when(reportServiceFactory.getReportAction(Role.USER)).thenReturn(reportService);
         when(reportService.viewReports("user123")).thenReturn(List.of(report));
 
-        ResponseEntity<List<Report>> response = reportController.getReports("USER", "user123");
+        ResponseEntity<List<Report>> response = reportController.getReports(Role.USER, "user123");
 
         assertThat(response.getBody()).containsExactly(report);
         assertThat(response.getStatusCodeValue()).isEqualTo(200);
@@ -80,16 +80,16 @@ class ReportControllerTest {
 
     @Test
     void testGetReports_userRoleWithoutUserId_returnsBadRequest() {
-        ResponseEntity<List<Report>> response = reportController.getReports("USER", null);
+        ResponseEntity<List<Report>> response = reportController.getReports(Role.USER, null);
         assertThat(response.getStatusCodeValue()).isEqualTo(400);
     }
 
     @Test
     void testDeleteReport_delegatesToService() {
         UUID reportId = UUID.randomUUID();
-        when(reportServiceFactory.getReportAction("ADMIN")).thenReturn(reportService);
+        when(reportServiceFactory.getReportAction(Role.ADMIN)).thenReturn(reportService);
 
-        ResponseEntity<Void> response = reportController.deleteReport(reportId, "ADMIN");
+        ResponseEntity<Void> response = reportController.deleteReport(reportId, Role.ADMIN);
 
         verify(reportService, times(1)).deleteReport(reportId);
         assertThat(response.getStatusCodeValue()).isEqualTo(204);
@@ -97,9 +97,9 @@ class ReportControllerTest {
 
     @Test
     void testVerifyCampaign_callsVerifyCampaignAndReturnsSuccess() {
-        when(reportServiceFactory.getReportAction("ADMIN")).thenReturn(reportService);
+        when(reportServiceFactory.getReportAction(Role.ADMIN)).thenReturn(reportService);
 
-        ResponseEntity<String> response = reportController.verifyCampaign("campX", "ADMIN");
+        ResponseEntity<String> response = reportController.verifyCampaign("campX", Role.ADMIN);
 
         verify(reportService).verifyCampaign("campX");
         assertThat(response.getStatusCodeValue()).isEqualTo(200);
