@@ -1,168 +1,325 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Wallet & Payment Method Tester</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User's Wallet</title>
   <style>
-    body { font-family: sans-serif; margin: 2em; }
-    fieldset { margin-bottom: 1.5em; }
-    pre { background: #f5f5f5; padding: 1em; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #f0eff5;
+      font-family: 'Segoe UI', sans-serif;
+      color: #333;
+      line-height: 1.4;
+      position: relative;
+    }
+    header {
+      background: #5a3cb3;
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-radius: 0 0 16px 16px;
+    }
+    header h1 {
+      font-size: 24px;
+      flex: 1;
+    }
+    header input {
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: none;
+      font-size: 14px;
+      margin-right: 12px;
+      width: 120px;
+    }
+    header button {
+      background: #472a88;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s;
+    }
+    header button:hover { background: #3e236f; }
+
+    .container {
+      display: flex;
+      max-width: 1200px;
+      margin: 24px auto;
+      gap: 24px;
+      padding: 0 16px;
+    }
+    aside {
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .card h2 {
+      font-size: 18px;
+      margin-bottom: 12px;
+      color: #5a3cb3;
+    }
+    .card .balance {
+      font-size: 32px;
+      font-weight: bold;
+      margin: 8px 0;
+    }
+    .card .actions {
+      display: flex;
+      gap: 12px;
+    }
+    button {
+      background: #5a3cb3;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s;
+    }
+    button:hover { background: #472a88; }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .form-group label {
+      font-size: 14px;
+      color: #555;
+    }
+    .form-group input {
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    /* Modal styling */
+    #modalOverlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    #modal {
+      background: #fff;
+      border-radius: 12px;
+      width: 80%;
+      max-width: 600px;
+      max-height: 70%;
+      overflow-y: auto;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      padding: 16px;
+    }
+    #modal h3 {
+      margin-bottom: 12px;
+      color: #5a3cb3;
+    }
+    #modal .close {
+      background: #e65b50;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+      float: right;
+    }
+    #modal ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    #modal ul li {
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    #modal ul li:last-child { border-bottom: none; }
   </style>
 </head>
 <body>
+<header>
+  <h1 id="title"></h1>
+  <input id="headerUser" placeholder="User ID">
+  <button onclick="getBalance()">Refresh</button>
+</header>
 
-<h1>API Tester</h1>
+<div class="container">
+  <aside>
+    <div class="card">
+      <h2>Payment Methods</h2>
+      <div class="form-group">
+        <label>Create</label>
+        <input id="pmUser" placeholder="User ID">
+        <input id="pmId"   placeholder="Method ID">
+        <input id="pmType" placeholder="Type">
+        <button onclick="createPM()">Create</button>
+      </div>
+      <div class="form-group">
+        <label>List</label>
+        <input id="pmListUser" placeholder="User ID">
+        <button onclick="listPM()">List</button>
+      </div>
+      <div class="form-group">
+        <label>Update</label>
+        <input id="pmUpUser" placeholder="User ID">
+        <input id="pmUpId"   placeholder="Method ID">
+        <input id="pmUpType" placeholder="New Type">
+        <button onclick="updatePM()">Update</button>
+      </div>
+      <div class="form-group">
+        <label>Delete</label>
+        <input id="pmDelUser" placeholder="User ID">
+        <input id="pmDelId"   placeholder="Method ID">
+        <button onclick="deletePM()">Delete</button>
+      </div>
+    </div>
+  </aside>
 
-<!-- 1) Payment Method -->
-<fieldset>
-  <legend>Create Payment Method</legend>
-  <input id="pm-user"     placeholder="User ID"      value="alice"/>
-  <input id="pm-id"       placeholder="PM ID"        value="pm-1"/>
-  <input id="pm-type"     placeholder="Type"         value="CreditCard"/>
-  <button onclick="createPM()">Create</button>
-</fieldset>
+  <main>
+    <div class="card">\
+      <h2>Total Balance</h2>
+      <div class="balance" id="balance">$0.00</div>
+      <div class="actions">
+        <button onclick="topUp()">Top Up</button>
+        <button onclick="withdraw()">Withdraw</button>
+        <button onclick="showHistory()">Transactions</button>
+      </div>
+    </div>
 
-<fieldset>
-  <legend>List Payment Methods</legend>
-  <input id="pm-list-user" placeholder="User ID" value="alice"/>
-  <button onclick="listPM()">List</button>
-</fieldset>
+    <div class="card">
+      <h2>Wallet Operations</h2>
+      <div class="form-group">
+        <label>Top Up</label>
+        <input id="wUser" placeholder="User ID">
+        <input id="wAmount" type="number" placeholder="Amount">
+        <input id="wPm" placeholder="Method ID">
+        <button onclick="topUp()">Top Up</button>
+      </div>
+      <div class="form-group">
+        <label>Withdraw</label>
+        <input id="wWdUser" placeholder="User ID">
+        <input id="wWdAmount" type="number" placeholder="Amount">
+        <button onclick="withdraw()">Withdraw</button>
+      </div>
+      <div class="form-group">
+        <label>Transaction History</label>
+        <button onclick="showHistory()">Get History</button>
+      </div>
+    </div>
+  </main>
+</div>
 
-<fieldset>
-  <legend>Update Payment Method</legend>
-  <input id="pm-up-user" placeholder="User ID" value="alice"/>
-  <input id="pm-up-id"   placeholder="PM ID"   value="pm-1"/>
-  <input id="pm-up-type" placeholder="New Type" value="GoPay"/>
-  <button onclick="updatePM()">Update</button>
-</fieldset>
-
-<fieldset>
-  <legend>Delete Payment Method</legend>
-  <input id="pm-del-user" placeholder="User ID" value="alice"/>
-  <input id="pm-del-id"   placeholder="PM ID"   value="pm-1"/>
-  <button onclick="deletePM()">Delete</button>
-</fieldset>
-
-<hr/>
-
-<!-- 2) Wallet -->
-<fieldset>
-  <legend>Top Up Wallet</legend>
-  <input id="w-user"      placeholder="User ID"       value="alice"/>
-  <input id="w-amount"    placeholder="Amount" value="100.00"/>
-  <input id="w-pm"        placeholder="PM ID"         value="pm-1"/>
-  <button onclick="topUp()">Top Up</button>
-</fieldset>
-
-<fieldset>
-  <legend>Withdraw</legend>
-  <input id="w-wd-user"   placeholder="User ID" value="alice"/>
-  <input id="w-wd-amount" placeholder="Amount"  value="50.00"/>
-  <button onclick="withdraw()">Withdraw</button>
-</fieldset>
-
-<fieldset>
-  <legend>Check Balance</legend>
-  <input id="w-bal-user" placeholder="User ID" value="alice"/>
-  <button onclick="getBalance()">Get Balance</button>
-</fieldset>
-
-<fieldset>
-  <legend>Transaction History</legend>
-  <input id="w-tx-user" placeholder="User ID" value="alice"/>
-  <button onclick="getTx()">Get Transactions</button>
-</fieldset>
-
-<h2>Response</h2>
-<pre id="output"></pre>
+<!-- Modal -->
+<div id="modalOverlay" onclick="closeModal()">
+  <div id="modal" onclick="event.stopPropagation()">
+    <button class="close" onclick="closeModal()">Close</button>
+    <h3>Transaction History</h3>
+    <ul id="historyList"></ul>
+  </div>
+</div>
 
 <script>
-  const out = document.getElementById('output');
+  function val(id) { return document.getElementById(id).value.trim(); }
 
-  function handle(res) {
-    out.textContent =
-            `Status: ${res.status} ${res.statusText}\n` +
-            [...res.headers.entries()].map(h=>`${h[0]}: ${h[1]}`).join('\n') +
-            '\n\n';
-    return res.json()
-            .then(json => out.textContent += JSON.stringify(json, null, 2))
-            .catch(()=> out.textContent += '(no JSON body)');
+  const titleEl = document.getElementById('title');
+  const headerUserInput = document.getElementById('headerUser');
+  headerUserInput.addEventListener('input', () => {
+    const name = headerUserInput.value || 'User';
+    titleEl.textContent = `${name}'s Wallet`;
+  });
+
+  function getBalance() {
+    const u = headerUserInput.value;
+    if (!u) return;
+    fetch(`/users/${u}/wallet`)
+            .then(r => r.json())
+            .then(js => document.getElementById('balance').textContent = `$${js.balance.toFixed(2)}`);
   }
 
   function createPM() {
-    const u = document.getElementById('pm-user').value;
-    const id = document.getElementById('pm-id').value;
-    const type = document.getElementById('pm-type').value;
-    fetch(`/users/${u}/payment-methods`, {
+    fetch(`/users/${val('pmUser')}/payment-methods`, {
       method: 'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ paymentMethodId: id, type })
-    })
-            .then(handle);
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ paymentMethodId: val('pmId'), type: val('pmType') })
+    });
   }
 
   function listPM() {
-    const u = document.getElementById('pm-list-user').value;
-    fetch(`/users/${u}/payment-methods`)
-            .then(handle);
+    fetch(`/users/${val('pmListUser')}/payment-methods`);
   }
 
   function updatePM() {
-    const u = document.getElementById('pm-up-user').value;
-    const id = document.getElementById('pm-up-id').value;
-    const type = document.getElementById('pm-up-type').value;
-    fetch(`/users/${u}/payment-methods/${id}`, {
+    fetch(`/users/${val('pmUpUser')}/payment-methods/${val('pmUpId')}`, {
       method: 'PUT',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ type })
-    })
-            .then(handle);
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ type: val('pmUpType') })
+    });
   }
 
   function deletePM() {
-    const u = document.getElementById('pm-del-user').value;
-    const id = document.getElementById('pm-del-id').value;
-    fetch(`/users/${u}/payment-methods/${id}`, {
-      method: 'DELETE'
-    })
-            .then(handle);
+    fetch(`/users/${val('pmDelUser')}/payment-methods/${val('pmDelId')}`, { method: 'DELETE' });
   }
 
   function topUp() {
-    const u = document.getElementById('w-user').value;
-    const amount = parseFloat(document.getElementById('w-amount').value);
-    const pm = document.getElementById('w-pm').value;
-    fetch(`/users/${u}/wallet/topup`, {
+    fetch(`/users/${val('wUser')}/wallet/topup`, {
       method: 'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ amount, paymentMethodId: pm })
-    })
-            .then(handle);
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ amount: parseFloat(val('wAmount')), paymentMethodId: val('wPm') })
+    }).finally(getBalance);
   }
 
   function withdraw() {
-    const u = document.getElementById('w-wd-user').value;
-    const amount = parseFloat(document.getElementById('w-wd-amount').value);
-    fetch(`/users/${u}/wallet/withdraw`, {
+    fetch(`/users/${val('wWdUser')}/wallet/withdraw`, {
       method: 'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ amount })
-    })
-            .then(handle);
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ amount: parseFloat(val('wWdAmount')) })
+    }).finally(getBalance);
   }
 
-  function getBalance() {
-    const u = document.getElementById('w-bal-user').value;
-    fetch(`/users/${u}/wallet`)
-            .then(handle);
-  }
-
-  function getTx() {
-    const u = document.getElementById('w-tx-user').value;
+  function showHistory() {
+    const u = headerUserInput.value;
+    if (!u) return;
     fetch(`/users/${u}/wallet/transactions`)
-            .then(handle);
+            .then(r => r.json())
+            .then(list => {
+              const ul = document.getElementById('historyList');
+              ul.innerHTML = '';
+              list.forEach(tx => {
+                const li = document.createElement('li');
+                li.textContent = `${tx.date} | ${tx.type} | $${tx.amount.toFixed(2)}`;
+                ul.appendChild(li);
+              });
+              document.getElementById('modalOverlay').style.display = 'flex';
+            });
   }
-</script>
 
+  function closeModal() {
+    document.getElementById('modalOverlay').style.display = 'none';
+  }
+
+  // Initialize
+  headerUserInput.value = '';
+  headerUserInput.dispatchEvent(new Event('input'));
+</script>
 </body>
 </html>

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.*;
 
 import java.math.BigDecimal;
 import java.util.Map;
@@ -18,31 +18,51 @@ import static org.assertj.core.api.Assertions.assertThat;
 class WalletIntegrationTest {
 
     @Autowired
-    TestRestTemplate rest;
+    private TestRestTemplate rest;
 
     @Test
     void fullFlow() {
-        // 1) add a payment method
-        var resp1 = rest.postForEntity(
-                "/users/bob/payment-methods",
+        // always send JSON
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // 1) create a new payment-method
+        HttpEntity<Map<String,String>> pmReq = new HttpEntity<>(
                 Map.of("paymentMethodId","pm-1","type","CC"),
+                headers
+        );
+        ResponseEntity<PaymentMethod> pmResp = rest.exchange(
+                "/users/bob/payment-methods",
+                HttpMethod.POST,
+                pmReq,
                 PaymentMethod.class
         );
-        assertThat(resp1.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(pmResp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(pmResp.getBody().getPaymentMethodId()).isEqualTo("pm-1");
 
-        // 2) top-up
-        var txResp = rest.postForEntity(
+        // 2) top-up 200
+        HttpEntity<Map<String,Object>> topUpReq = new HttpEntity<>(
+                Map.of("amount", BigDecimal.valueOf(200),
+                        "paymentMethodId","pm-1"),
+                headers
+        );
+        ResponseEntity<Transaction> txResp = rest.exchange(
                 "/users/bob/wallet/topup",
-                Map.of("amount",200,"paymentMethodId","pm-1"),
+                HttpMethod.POST,
+                topUpReq,
                 Transaction.class
         );
         assertThat(txResp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(txResp.getBody().getAmount())
                 .isEqualByComparingTo(BigDecimal.valueOf(200));
 
-        // 3) balance should be 200
-        var wallet = rest.getForObject("/users/bob/wallet", Wallet.class);
-        assertThat(wallet.getBalance())
+        // 3) fetch wallet and assert balance
+        ResponseEntity<Wallet> wResp = rest.getForEntity(
+                "/users/bob/wallet",
+                Wallet.class
+        );
+        assertThat(wResp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(wResp.getBody().getBalance())
                 .isEqualByComparingTo(BigDecimal.valueOf(200));
     }
 }
