@@ -1,4 +1,4 @@
-package k6.gatherlove.wallet.controller;
+package k6.gatherlove.controller;
 import k6.gatherlove.wallet.controller.HelloController;
 
 import org.junit.jupiter.api.Test;
