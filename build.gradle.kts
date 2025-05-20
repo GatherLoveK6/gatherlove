@@ -29,6 +29,39 @@ dependencies {
     // ─── Spring Boot Starters ───────────────────────────────────────────────────
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    compileOnly("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
+
+    // ─── Jakarta Annotations (e.g. @PostConstruct) ────────────────────────────
+    implementation("jakarta.annotation:jakarta.annotation-api:2.1.1")
+
+    // ─── Devtools ──────────────────────────────────────────────────────────────
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
+
+    // ─── Testing ───────────────────────────────────────────────────────────────
+    testImplementation("org.springframework.boot:spring-boot-starter-test") {
+        // JUnit 4 support is not needed
+        exclude(module = "junit-vintage-engine")
+    }
+    testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.11.0")
+    runtimeOnly("com.h2database:h2")
+    testImplementation("org.springframework.boot:spring-boot-starter-test") {
+        exclude(module = "junit-vintage-engine")
+    }
+    // Mockito support for @ExtendWith(MockitoExtension.class)
+    testImplementation("org.mockito:mockito-junit-jupiter:5.11.0")
+    // Bean Validation implementation for jakarta.validation.*
+    testImplementation("org.hibernate.validator:hibernate-validator:8.0.0.Final")
+    // Spring Security test helpers (csrf(), etc)
+    testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.11.0")
+    testImplementation("org.hibernate.validator:hibernate-validator:8.0.0.Final")
+    testImplementation("org.springframework.security:spring-security-test")
+
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
