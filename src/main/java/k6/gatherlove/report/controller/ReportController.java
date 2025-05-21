@@ -1,6 +1,6 @@
 package k6.gatherlove.report.controller;
 
-import k6.gatherlove.enums.Role;
+import k6.gatherlove.report.enums.Role;
 import k6.gatherlove.report.dto.ReportRequestDTO;
 import k6.gatherlove.report.factory.ReportServiceFactory;
 import k6.gatherlove.report.model.Report;

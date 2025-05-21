@@ -1,6 +1,6 @@
 package k6.gatherlove.report.factory;
 
-import k6.gatherlove.enums.Role;
+import k6.gatherlove.report.enums.Role;
 import k6.gatherlove.report.service.AdminReportServiceImpl;
 import k6.gatherlove.report.service.ReportService;
 import k6.gatherlove.report.service.UserReportServiceImpl;

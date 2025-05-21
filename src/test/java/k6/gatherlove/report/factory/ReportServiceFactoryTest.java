@@ -1,6 +1,6 @@
 package k6.gatherlove.report.factory;
 
-import k6.gatherlove.report.factory.ReportServiceFactory;
+import k6.gatherlove.report.enums.Role;
 import k6.gatherlove.report.service.AdminReportServiceImpl;
 import k6.gatherlove.report.service.ReportService;
 import k6.gatherlove.report.service.UserReportServiceImpl;
@@ -13,26 +13,26 @@ import static org.mockito.Mockito.*;
 class ReportServiceFactoryTest {
 
     private UserReportServiceImpl userReportServiceImpl;
-    private AdminReportServiceImpl adminReportActionImpl;
+    private AdminReportServiceImpl adminReportServiceImpl;
     private ReportServiceFactory factory;
 
     @BeforeEach
     void setUp() {
         userReportServiceImpl = mock(UserReportServiceImpl.class);
-        adminReportActionImpl = mock(AdminReportServiceImpl.class);
-        factory = new ReportServiceFactory(userReportServiceImpl, adminReportActionImpl);
+        adminReportServiceImpl = mock(AdminReportServiceImpl.class);
+        factory = new ReportServiceFactory(userReportServiceImpl, adminReportServiceImpl);
     }
 
     @Test
     void testGetReportActionForUser() {
-        ReportService result = factory.getReportAction("USER");
+        ReportService result = factory.getReportAction(Role.USER);
         assertEquals(userReportServiceImpl, result);
     }
 
     @Test
     void testGetReportActionForAdmin() {
-        ReportService result = factory.getReportAction("ADMIN");
-        assertEquals(adminReportActionImpl, result);
+        ReportService result = factory.getReportAction(Role.ADMIN);
+        assertEquals(adminReportServiceImpl, result);
     }
 
     @Test
@@ -41,13 +41,5 @@ class ReportServiceFactoryTest {
             factory.getReportAction(null);
         });
         assertTrue(exception.getMessage().contains("Role cannot be null"));
-    }
-
-    @Test
-    void testGetReportActionWithUnsupportedRole() {
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            factory.getReportAction("MODERATOR");
-        });
-        assertTrue(exception.getMessage().contains("Unsupported role"));
     }
 }
