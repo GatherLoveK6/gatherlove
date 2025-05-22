@@ -18,15 +18,14 @@ public class PaymentMethodService {
         this.repo = repo;
     }
 
-    /** restore the original public validator so WalletService can call it */
-    public void validatePaymentMethod(String userId, String paymentMethodId) {
-        PaymentMethod pm = repo.findById(paymentMethodId)
-                .orElseThrow(() -> new IllegalArgumentException("Payment method not found: " + paymentMethodId));
-        if (!pm.getUserId().equals(userId)) {
-            throw new IllegalArgumentException(
-                    "Payment method " + paymentMethodId + " does not belong to user " + userId
-            );
-        }
+    // Validator publik untuk WalletService
+    public void validatePaymentMethod(String userId, String pmCode) {
+        repo.findByUserIdAndPaymentMethodId(userId, pmCode)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Payment method tidak ditemukan atau bukan milik user ini: " + pmCode
+                        )
+                );
     }
 
     @Async("taskExecutor")
@@ -35,24 +34,38 @@ public class PaymentMethodService {
     }
 
     @Async("taskExecutor")
-    public CompletableFuture<PaymentMethod> createAsync(String userId, String pmId, String type) {
-        PaymentMethod pm = new PaymentMethod(pmId, userId, type);
+    public CompletableFuture<PaymentMethod> createAsync(
+            String userId, String pmCode, String type
+    ) {
+        // limit 3
+        if (repo.countByUserId(userId) >= 3) {
+            throw new IllegalArgumentException("Maksimal 3 payment method per user");
+        }
+        // no dup untuk user yang sama
+        if (repo.findByUserIdAndPaymentMethodId(userId, pmCode).isPresent()) {
+            throw new IllegalArgumentException(
+                    "Payment method '" + pmCode + "' sudah ada untuk user ini"
+            );
+        }
+        PaymentMethod pm = new PaymentMethod(userId, pmCode, type);
         return CompletableFuture.completedFuture(repo.save(pm));
     }
 
     @Async("taskExecutor")
-    public CompletableFuture<PaymentMethod> updateAsync(String userId, String pmId, String newType) {
-        PaymentMethod pm = repo.findById(pmId)
-                .orElseThrow(() -> new IllegalArgumentException("Payment method not found: " + pmId));
-        validatePaymentMethod(userId, pmId);
+    public CompletableFuture<PaymentMethod> updateAsync(
+            String userId, String pmCode, String newType
+    ) {
+        validatePaymentMethod(userId, pmCode);
+        PaymentMethod pm = repo.findByUserIdAndPaymentMethodId(userId, pmCode).get();
         pm.setType(newType);
         return CompletableFuture.completedFuture(repo.save(pm));
     }
 
     @Async("taskExecutor")
-    public CompletableFuture<Void> deleteAsync(String userId, String pmId) {
-        validatePaymentMethod(userId, pmId);
-        repo.deleteById(pmId);
+    public CompletableFuture<Void> deleteAsync(String userId, String pmCode) {
+        validatePaymentMethod(userId, pmCode);
+        PaymentMethod pm = repo.findByUserIdAndPaymentMethodId(userId, pmCode).get();
+        repo.delete(pm);
         return CompletableFuture.completedFuture(null);
     }
 }
