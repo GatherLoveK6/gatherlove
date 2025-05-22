@@ -28,9 +28,7 @@ public class PaymentMethodController {
             @PathVariable String userId,
             @RequestBody PaymentMethodDto body
     ) {
-        // capture the builder while we're still on the request thread
         UriComponentsBuilder base = ServletUriComponentsBuilder.fromCurrentRequest();
-
         return svc.createAsync(userId, body.getPaymentMethodId(), body.getType())
                 .thenApply(pm -> {
                     URI location = base
