@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create Payment Method</title>
+  <!-- copy your existing CSS or link to it here -->
+  <style>
+    body { background: #f0eff5; font-family: 'Segoe UI', sans-serif; }
+    .container { max-width: 400px; margin: 80px auto; }
+    .card { background: #fff; border-radius: 12px; padding: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .card h2 { color: #5a3cb3; margin-bottom: 16px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; margin-bottom: 8px; color: #555; }
+    .form-group input { width: 100%; padding: 8px; border: 1px solid #ccc;
+      border-radius: 6px; font-size: 14px; }
+    button { width: 100%; background: #5a3cb3; color: #fff; border: none;
+      padding: 12px; border-radius: 8px; font-size: 16px; cursor: pointer; }
+    button:hover { background: #472a88; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="card">
+    <h2>Create Payment Method</h2>
+    <div class="form-group">
+      <label for="userId">User ID</label>
+      <input id="userId" placeholder="e.g. alice" />
+    </div>
+    <div class="form-group">
+      <label for="pmId">Method ID</label>
+      <input id="pmId" placeholder="e.g. pm-3" />
+    </div>
+    <div class="form-group">
+      <label for="pmType">Type</label>
+      <input id="pmType" placeholder="e.g. CreditCard" />
+    </div>
+    <button id="createBtn">Create</button>
+  </div>
+</div>
+
+<script>
+  const btn = document.getElementById('createBtn');
+
+  btn.addEventListener('click', () => {
+    const user = document.getElementById('userId').value.trim();
+    const pmId = document.getElementById('pmId').value.trim();
+    const type = document.getElementById('pmType').value.trim();
+    if (!user || !pmId || !type) {
+      alert('Please fill all fields.');
+      return;
+    }
+
+    fetch(`/users/${encodeURIComponent(user)}/payment-methods`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paymentMethodId: pmId, type })
+    })
+            .then(res => {
+              if (res.ok) {
+                // on success, redirect back to main wallet UI, passing user in query
+                window.location.href = `index.html?user=${encodeURIComponent(user)}`;
+              } else {
+                return res.json().then(err => { throw new Error(err.message) });
+              }
+            })
+            .catch(err => alert('Error: ' + err.message));
+  });
+</script>
+</body>
+</html>
