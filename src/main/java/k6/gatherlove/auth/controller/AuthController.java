@@ -4,12 +4,15 @@ package k6.gatherlove.auth.controller;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import k6.gatherlove.auth.dto.RegisterUserRequest;
+import k6.gatherlove.auth.dto.UpdateProfileRequest;
 import k6.gatherlove.auth.model.User;
+import k6.gatherlove.auth.repository.UserRepository;
 import k6.gatherlove.auth.strategy.AuthStrategy;
 import k6.gatherlove.auth.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -25,6 +28,7 @@ public class AuthController {
 
     private final AuthStrategy authStrategy;
     private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;    // ← new
 
     @GetMapping("/login")
     public String showLogin() {
@@ -32,12 +36,10 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public String login(
-            @RequestParam String email,
-            @RequestParam String password,
-            HttpServletResponse response,
-            RedirectAttributes redirectAttrs
-    ) {
+    public String login(@RequestParam String email,
+                        @RequestParam String password,
+                        HttpServletResponse response,
+                        RedirectAttributes redirectAttrs) {
         try {
             User user = authStrategy.login(email, password);
             String token = jwtUtil.generateToken(user);
@@ -49,34 +51,23 @@ public class AuthController {
                     .build();
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
             redirectAttrs.addFlashAttribute("message", "Login successful!");
-            return "redirect:/hello";
+            return "redirect:/home";
         } catch (RuntimeException ex) {
             redirectAttrs.addFlashAttribute("error", ex.getMessage());
             return "redirect:/auth/login";
         }
     }
 
-    // ——— THIS IS WHAT MATTERS FOR REGISTER ———
     @GetMapping("/register")
-    public String showRegister(Model model) {
-        // if we're coming to the form *after* a redirect with errors,
-        // Spring will have already flash-added "registerDto" and "errors".
-        // But on a *fresh* GET we need to supply an empty one.
-        if (!model.containsAttribute("registerDto")) {
-            model.addAttribute("registerDto", new RegisterUserRequest());
-        }
+    public String showRegister() {
         return "auth/register";
     }
 
     @PostMapping("/register")
-    public String register(
-            @ModelAttribute("registerDto") @Valid RegisterUserRequest req,
-            BindingResult binding,
-            RedirectAttributes redirectAttrs
-    ) {
+    public String register(@ModelAttribute @Valid RegisterUserRequest req,
+                           BindingResult binding,
+                           RedirectAttributes redirectAttrs) {
         if (binding.hasErrors()) {
-            // re-flash both the bean and its errors
-            redirectAttrs.addFlashAttribute("registerDto", req);
             redirectAttrs.addFlashAttribute("errors", binding.getAllErrors());
             return "redirect:/auth/register";
         }
@@ -97,5 +88,53 @@ public class AuthController {
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         redirectAttrs.addFlashAttribute("message", "You’ve been logged out.");
         return "redirect:/auth/login";
+    }
+
+    // ─── PROFILE ───────────────────────────────────────────────────
+
+    @GetMapping("/profile")
+    public String viewProfile(Model model, Authentication auth) {
+        String email = auth.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        model.addAttribute("user", user);
+        return "auth/profile/view";
+    }
+
+    @GetMapping("/profile/edit")
+    public String editProfile(Model model, Authentication auth) {
+        String email = auth.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        model.addAttribute("profileDto", new UpdateProfileRequest(
+                user.getFullName(), user.getPhone(), user.getAddress()
+        ));
+        return "auth/profile/edit";
+    }
+
+    @PostMapping("/profile")
+    public String updateProfile(
+            @ModelAttribute("profileDto") @Valid UpdateProfileRequest dto,
+            BindingResult binding,
+            Authentication auth,
+            RedirectAttributes redirectAttrs) {
+
+        if (binding.hasErrors()) {
+            redirectAttrs.addFlashAttribute("errors", binding.getAllErrors());
+            redirectAttrs.addFlashAttribute("profileDto", dto);
+            return "redirect:/auth/profile/edit";
+        }
+
+        String email = auth.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setFullName(dto.getFullName());
+        user.setPhone(dto.getPhone());
+        user.setAddress(dto.getAddress());
+        userRepository.save(user);
+
+        redirectAttrs.addFlashAttribute("message", "Profile updated!");
+        return "redirect:/auth/profile";
     }
 }
