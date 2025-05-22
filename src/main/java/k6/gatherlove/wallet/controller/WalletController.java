@@ -9,57 +9,67 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/users/{userId}/wallet")
 public class WalletController {
-    private final WalletService walletService;
+    private final WalletService svc;
 
     @Autowired
-    public WalletController(WalletService walletService) {
-        this.walletService = walletService;
+    public WalletController(WalletService svc) {
+        this.svc = svc;
     }
 
     @PostMapping("/topup")
-    public ResponseEntity<Transaction> topUp(
+    public CompletableFuture<ResponseEntity<Transaction>> topUp(
             @PathVariable String userId,
             @RequestBody TopUpRequest body
     ) {
-        Transaction tx = walletService.topUp(userId, body.getAmount(), body.getPaymentMethodId());
-        URI location = ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/transactions/{txId}")
-                .buildAndExpand(tx.getTransactionId())
-                .toUri();
+        UriComponentsBuilder base = ServletUriComponentsBuilder.fromCurrentRequest();
 
-        return ResponseEntity.created(location).body(tx);
+        return svc.topUpAsync(userId, body.getAmount(), body.getPaymentMethodId())
+                .thenApply(tx -> {
+                    URI location = base
+                            .path("/transactions/{txId}")
+                            .buildAndExpand(tx.getTransactionId())
+                            .toUri();
+                    return ResponseEntity.created(location).body(tx);
+                });
     }
 
     @PostMapping("/withdraw")
-    public ResponseEntity<Transaction> withdraw(
+    public CompletableFuture<ResponseEntity<Transaction>> withdraw(
             @PathVariable String userId,
             @RequestBody WithdrawRequest body
     ) {
-        Transaction tx = walletService.withdraw(userId, body.getAmount());
-        URI location = ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/transactions/{txId}")
-                .buildAndExpand(tx.getTransactionId())
-                .toUri();
+        UriComponentsBuilder base = ServletUriComponentsBuilder.fromCurrentRequest();
 
-        return ResponseEntity.created(location).body(tx);
+        return svc.withdrawAsync(userId, body.getAmount())
+                .thenApply(tx -> {
+                    URI location = base
+                            .path("/transactions/{txId}")
+                            .buildAndExpand(tx.getTransactionId())
+                            .toUri();
+                    return ResponseEntity.created(location).body(tx);
+                });
     }
 
     @GetMapping
-    public ResponseEntity<Wallet> getWallet(@PathVariable String userId) {
-        return ResponseEntity.ok(walletService.getWallet(userId));
+    public CompletableFuture<ResponseEntity<Wallet>> getWallet(@PathVariable String userId) {
+        return svc.getWalletAsync(userId)
+                .thenApply(ResponseEntity::ok);
     }
 
     @GetMapping("/transactions")
-    public ResponseEntity<List<Transaction>> transactionHistory(@PathVariable String userId) {
-        return ResponseEntity.ok(walletService.getTransactions(userId));
+    public CompletableFuture<ResponseEntity<List<Transaction>>> transactionHistory(
+            @PathVariable String userId
+    ) {
+        return svc.getTransactionsAsync(userId)
+                .thenApply(ResponseEntity::ok);
     }
 }
