@@ -1,6 +1,8 @@
 package k6.gatherlove.wallet.controller;
 
 import k6.gatherlove.wallet.domain.PaymentMethod;
+import k6.gatherlove.wallet.repository.PaymentMethodRepository;   // ← import
+import org.junit.jupiter.api.BeforeEach;                          // ← import
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,6 +20,9 @@ class PaymentMethodControllerIntegrationTest {
     @Autowired
     private TestRestTemplate rest;
 
+    @Autowired                                                    // ← inject repo
+    private PaymentMethodRepository paymentMethodRepository;
+
     private final HttpHeaders headers = new HttpHeaders();
 
     public PaymentMethodControllerIntegrationTest() {
@@ -25,12 +30,18 @@ class PaymentMethodControllerIntegrationTest {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
     }
 
+    @BeforeEach                                                   // ← clear before each test
+    void cleanDb() {
+        paymentMethodRepository.deleteAll();
+    }
+
     @Test
     void list_update_delete_flow() {
         // 1) CREATE
-        HttpEntity<Map<String,String>> createReq =
-                new HttpEntity<>(Map.of("paymentMethodId","pm-1","type","CC"), headers);
-
+        HttpEntity<Map<String,String>> createReq = new HttpEntity<>(
+                Map.of("paymentMethodId","pm-1","type","CC"),
+                headers
+        );
         ResponseEntity<PaymentMethod> createResp = rest.exchange(
                 "/users/{userId}/payment-methods",
                 HttpMethod.POST,
@@ -54,19 +65,24 @@ class PaymentMethodControllerIntegrationTest {
         assertThat(methods[0].getType()).isEqualTo("CC");
 
         // 3) UPDATE
-        HttpEntity<Map<String,String>> updateReq =
-                new HttpEntity<>(Map.of("type","GoPay"), headers);
-
-        ResponseEntity<Void> updateResp = rest.exchange(
+        HttpEntity<Map<String,String>> updateReq = new HttpEntity<>(
+                Map.of("type","GoPay"),
+                headers
+        );
+        ResponseEntity<PaymentMethod> updateResp = rest.exchange(
                 "/users/{userId}/payment-methods/{pmId}",
                 HttpMethod.PUT,
                 updateReq,
-                Void.class,
+                PaymentMethod.class,
                 "bob", "pm-1"
         );
         assertThat(updateResp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        PaymentMethod returned = updateResp.getBody();
+        assertThat(returned).isNotNull();
+        assertThat(returned.getPaymentMethodId()).isEqualTo("pm-1");
+        assertThat(returned.getType()).isEqualTo("GoPay");
 
-        // confirm update
+        // Confirm via fresh LIST
         PaymentMethod updated = rest.exchange(
                 "/users/{userId}/payment-methods",
                 HttpMethod.GET,
@@ -86,7 +102,7 @@ class PaymentMethodControllerIntegrationTest {
         );
         assertThat(deleteResp.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
-        // confirm empty
+        // Confirm empty
         PaymentMethod[] after = rest.exchange(
                 "/users/{userId}/payment-methods",
                 HttpMethod.GET,
