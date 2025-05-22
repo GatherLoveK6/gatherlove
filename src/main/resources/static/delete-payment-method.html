@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Delete Payment Method</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    body {
+      background: #f0eff5;
+      font-family: 'Segoe UI', sans-serif;
+      color: #333;
+      line-height: 1.4;
+    }
+    .container {
+      display: flex;
+      justify-content: center;
+      margin: 80px 16px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      width: 320px;
+    }
+    .card .form-group {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: #555;
+    }
+    .form-group input {
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    button {
+      background: #5a3cb3;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.3s;
+      width: 100%;
+    }
+    button:hover { background: #472a88 }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="card">
+    <div class="form-group">
+      <label for="userId">User ID</label>
+      <input id="userId" readonly />
+    </div>
+    <div class="form-group">
+      <label for="pmId">Method ID</label>
+      <input id="pmId" placeholder="pm-1" />
+    </div>
+    <button id="btnDelete">Delete</button>
+  </div>
+</div>
+
+<script>
+  // ambil user dari query string
+  const params = new URLSearchParams(location.search);
+  const user = params.get('user') || '';
+  document.getElementById('userId').value = user;
+
+  document.getElementById('btnDelete').onclick = () => {
+    const pmId = document.getElementById('pmId').value.trim();
+    if (!user || !pmId) {
+      return alert('Semua field harus diisi');
+    }
+
+    fetch(`/users/${user}/payment-methods/${pmId}`, {
+      method: 'DELETE'
+    })
+            .then(res => {
+              if (!res.ok) throw new Error(res.statusText);
+              alert('Successfully deleted! 🗑️');           // <-- ini
+              window.location.href =                        // <-- lalu redirect
+                      `index.html?user=${encodeURIComponent(user)}`;
+            })
+            .catch(err => alert('Error: ' + err.message));
+  };
+</script>
+</body>
+</html>
