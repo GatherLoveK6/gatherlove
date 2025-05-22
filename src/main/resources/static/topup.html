@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Top Up Wallet</title>
+    <style>
+        * { box-sizing:border-box; margin:0; padding:0 }
+        body {
+            background:#f0eff5;
+            font-family:'Segoe UI',sans-serif;
+            color:#333;
+            display:flex; align-items:center; justify-content:center;
+            height:100vh;
+        }
+        .card {
+            background:#fff;
+            border-radius:12px;
+            padding:24px;
+            box-shadow:0 4px 12px rgba(0,0,0,0.05);
+            width:320px;
+        }
+        .form-group { margin-bottom:16px; display:flex; flex-direction:column }
+        label { margin-bottom:6px; color:#555; font-size:14px }
+        input {
+            padding:8px; border:1px solid #ccc; border-radius:6px;
+            font-size:14px;
+        }
+        button {
+            background:#5a3cb3; color:#fff; border:none;
+            border-radius:8px; padding:10px; font-size:14px;
+            cursor:pointer; width:100%; transition:background .3s;
+        }
+        button:hover { background:#472a88 }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h3>Top Up Wallet</h3>
+    <div class="form-group">
+        <label>User ID</label>
+        <input id="userId" readonly />
+    </div>
+    <div class="form-group">
+        <label>Amount</label>
+        <input id="amount" type="number" placeholder="misal: 100" />
+    </div>
+    <div class="form-group">
+        <label>Method ID</label>
+        <input id="pmId" placeholder="misal: pm-1" />
+    </div>
+    <button id="btnSubmit">Submit</button>
+</div>
+
+<script>
+    // Ambil user dari querystring
+    const p = new URLSearchParams(location.search);
+    const user = p.get('user') || '';
+    document.getElementById('userId').value = user;
+
+    document.getElementById('btnSubmit').onclick = () => {
+        const amt = parseFloat(document.getElementById('amount').value);
+        const pm  = document.getElementById('pmId').value.trim();
+        if (!user || !amt || !pm) {
+            return alert('Semua field harus diisi');
+        }
+        fetch(`/users/${user}/wallet/topup`, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ amount: amt, paymentMethodId: pm })
+        })
+            .then(res => {
+                if (!res.ok) throw new Error(res.statusText);
+                alert('Successfully topped up 🎉');
+                window.location.href = `index.html?user=${encodeURIComponent(user)}`;
+            })
+            .catch(e => alert('Error: ' + e.message));
+    };
+</script>
+</body>
+</html>
