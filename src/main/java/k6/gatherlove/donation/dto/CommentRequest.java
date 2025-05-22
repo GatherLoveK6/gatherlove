@@ -1,4 +1,4 @@
-package k6.gatherlove.donation.comment.dto;
+package k6.gatherlove.donation.dto;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,4 +1,4 @@
-package k6.gatherlove.donation.comment.model;
+package k6.gatherlove.donation.model;
 
 import lombok.Getter;
 import java.time.Instant;

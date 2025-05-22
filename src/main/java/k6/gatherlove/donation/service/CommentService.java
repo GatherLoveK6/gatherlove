@@ -1,6 +1,6 @@
-package k6.gatherlove.donation.comment.service;
+package k6.gatherlove.donation.service;
 
-import k6.gatherlove.donation.comment.model.Comment;
+import k6.gatherlove.donation.model.Comment;
 import java.util.List;
 
 public interface CommentService {

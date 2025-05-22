@@ -1,6 +1,6 @@
-package k6.gatherlove.donation.comment.repository;
+package k6.gatherlove.donation.repository;
 
-import k6.gatherlove.donation.comment.model.Comment;
+import k6.gatherlove.donation.model.Comment;
 import org.springframework.stereotype.Repository;
 import java.util.ArrayList;
 import java.util.Comparator;

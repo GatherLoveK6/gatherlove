@@ -1,7 +1,7 @@
-package k6.gatherlove.donation.comment.service;
+package k6.gatherlove.donation.service;
 
-import k6.gatherlove.donation.comment.model.Comment;
-import k6.gatherlove.donation.comment.repository.InMemoryCommentRepository;
+import k6.gatherlove.donation.model.Comment;
+import k6.gatherlove.donation.repository.InMemoryCommentRepository;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.web.client.RestTemplateBuilder;
