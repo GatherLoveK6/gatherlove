@@ -40,8 +40,9 @@ class WalletServiceTest {
         String pmId   = "pm1";
         BigDecimal amount = BigDecimal.valueOf(100);
 
-        when(paymentMethodRepo.findById(pmId))
-                .thenReturn(Optional.of(new PaymentMethod(pmId, userId, "CREDIT_CARD")));
+        // stub validate step (composite lookup)
+        when(paymentMethodRepo.findByUserIdAndPaymentMethodId(userId, pmId))
+                .thenReturn(Optional.of(new PaymentMethod(userId, pmId, "CREDIT_CARD")));
         when(walletRepo.findByUserId(userId))
                 .thenReturn(Optional.empty());
 
