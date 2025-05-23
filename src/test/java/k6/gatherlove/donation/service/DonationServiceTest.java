@@ -1,7 +1,6 @@
 package k6.gatherlove.donation.service;
 
 import k6.gatherlove.donation.model.Donation;
-import k6.gatherlove.donation.repository.InMemoryDonationRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
