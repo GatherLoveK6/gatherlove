@@ -33,19 +33,19 @@ public class UserReportServiceImpl implements ReportService {
 
     @Override
     public List<Report> viewReports(String userId) {
-        // Users can see only their own reports
+
         return reportRepository.findByReportedBy(userId);
     }
 
     @Override
     public void deleteReport(UUID reportId) {
-        // Users are not allowed to delete reports
+
         throw new UnsupportedOperationException("Users are not allowed to delete reports.");
     }
 
     @Override
     public void verifyCampaign(String campaignId) {
-        // Users are not allowed to verify campaigns
+
         throw new UnsupportedOperationException("Users are not allowed to verify campaigns.");
     }
 

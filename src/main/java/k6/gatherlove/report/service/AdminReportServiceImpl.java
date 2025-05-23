@@ -18,25 +18,25 @@ public class AdminReportServiceImpl implements ReportService {
 
     @Override
     public Report createReport(String campaignId, String userId, String title, String description, String violationType) {
-        // Admins do not create reports. Only users report campaigns.
+
         throw new UnsupportedOperationException("Admins are not allowed to create reports.");
     }
 
     @Override
     public List<Report> viewReports(String userId) {
-        // Admins can view all reports regardless of the reporter
+
         return reportRepository.findAll();
     }
 
     @Override
     public void deleteReport(UUID reportId) {
-        // Admins can delete a report if it is found invalid
+
         reportRepository.deleteById(reportId);
     }
 
     @Override
     public void verifyCampaign(String campaignId) {
-        // For simplicity, verify campaigns by marking all reports for the given campaign as verified.
+
         List<Report> reports = reportRepository.findAll();
         reports.stream()
                 .filter(report -> report.getCampaignId().equals(campaignId))

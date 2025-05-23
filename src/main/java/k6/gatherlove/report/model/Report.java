@@ -31,11 +31,9 @@ public class Report {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    // Stores the campaign identifier that is being reported.
     @Column(name = "campaign_id", nullable = false)
     private String campaignId;
 
-    // Stores the ID of the user who reported the campaign.
     @Column(name = "reported_by", nullable = false)
     private String reportedBy;
 
@@ -48,11 +46,9 @@ public class Report {
     @Column(name = "violation_type", nullable = false)
     private String violationType;
 
-    // Date and time the report was created.
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    // Flag for whether the report has been verified.
     @Column(nullable = false)
     private boolean verified;
 }
