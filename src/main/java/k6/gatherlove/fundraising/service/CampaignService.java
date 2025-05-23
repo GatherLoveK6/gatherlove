@@ -20,4 +20,10 @@ public interface CampaignService {
     void uploadProofOfFundUsage(Long id, Long userId, MultipartFile file);
     void verifyCampaign(Long id, boolean approved);
     List<Campaign> getActiveCampaigns();
+    
+    /**
+     * Get all campaigns with PENDING_VERIFICATION status
+     * @return List of pending campaigns
+     */
+    List<Campaign> getPendingCampaigns();
 }
