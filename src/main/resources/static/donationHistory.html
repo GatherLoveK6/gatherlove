@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Donation History</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 1rem; }
+        button, a.button { padding: .5rem 1rem; margin-right: .5rem; text-decoration: none; }
+        .error { color: #c00; }
+        .success { color: #080; }
+        ul { padding-left: 1.2rem; }
+    </style>
+</head>
+<body>
+<h1>My Donation History</h1>
+
+<label>Your User ID:
+    <input type="text" id="userId" value="user1" required>
+</label>
+<button id="load-history">Load History</button>
+<a href="donation.html" class="button">Back to Donate</a>
+
+<p id="history-msg"></p>
+<ul id="history"></ul>
+
+<script>
+    const API = '/donations';
+    const loadBtn = document.getElementById('load-history');
+    const histEl  = document.getElementById('history');
+    const msgEl   = document.getElementById('history-msg');
+
+    loadBtn.addEventListener('click', () => {
+        const userId = document.getElementById('userId').value.trim();
+        fetchHistory(userId);
+    });
+
+    async function fetchHistory(userId) {
+        histEl.innerHTML = '';
+        msgEl.textContent = '';
+        try {
+            const resp = await fetch(`${API}?userId=${encodeURIComponent(userId)}`);
+            if (!resp.ok) throw new Error('Failed to load');
+            const list = await resp.json();
+            if (!list.length) {
+                histEl.innerHTML = '<li>No donations yet.</li>';
+                return;
+            }
+            for (const d of list) {
+                const li = document.createElement('li');
+                li.textContent = `#${d.id.slice(0,8)} → ${d.campaignId}: $${d.amount.toFixed(2)}`;
+                if (!d.canceled) {
+                    const btn = document.createElement('button');
+                    btn.textContent = 'Cancel';
+                    btn.addEventListener('click', () => cancelDonation(d.id, userId));
+                    li.append(' ', btn);
+                } else {
+                    li.append(' (canceled)');
+                }
+                histEl.appendChild(li);
+            }
+        } catch (err) {
+            msgEl.textContent = err.message;
+            msgEl.className = 'error';
+        }
+    }
+
+    async function cancelDonation(id, userId) {
+        try {
+            const resp = await fetch(`${API}/${id}`, { method: 'DELETE' });
+            if (!resp.ok) throw new Error('Cancel failed');
+            msgEl.textContent = '↺ Canceled.';
+            msgEl.className = 'success';
+            fetchHistory(userId);
+        } catch (err) {
+            msgEl.textContent = err.message;
+            msgEl.className = 'error';
+        }
+    }
+</script>
+</body>
+</html>
