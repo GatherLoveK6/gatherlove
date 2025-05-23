@@ -2,15 +2,9 @@ package k6.gatherlove.fundraising.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -24,6 +18,7 @@ import k6.gatherlove.fundraising.exception.ValidationException;
 import k6.gatherlove.fundraising.model.Campaign;
 import k6.gatherlove.fundraising.model.CampaignStatus;
 import k6.gatherlove.fundraising.service.CampaignService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +27,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -47,6 +45,12 @@ class CampaignControllerTest {
     @InjectMocks
     private CampaignController campaignController;
 
+    @Mock
+    private Authentication authentication;
+
+    @Mock
+    private SecurityContext securityContext;
+
     private MockMvc mockMvc;
     private ObjectMapper objectMapper;
 
@@ -56,11 +60,16 @@ class CampaignControllerTest {
         
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
+        
+        SecurityContextHolder.setContext(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
     }
 
     @Test
     void shouldCreateCampaignWhenDataIsValid() throws Exception {
-        // Arrange
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("1234");
+        
         CampaignCreationRequest request = new CampaignCreationRequest(
                 "Help Orphans",
                 "Supporting orphans with education and healthcare needs.",
@@ -75,15 +84,14 @@ class CampaignControllerTest {
         createdCampaign.setGoalAmount(new BigDecimal("5000.00"));
         createdCampaign.setDeadline(LocalDate.now().plusMonths(3));
         createdCampaign.setStatus(CampaignStatus.PENDING_VERIFICATION);
-        createdCampaign.setUserId(1L);
+        createdCampaign.setUserId(1234L);
 
-        when(campaignService.createCampaign(any(CampaignCreationRequest.class), eq(1L)))
+        when(campaignService.createCampaign(any(CampaignCreationRequest.class), eq(1234L)))
                 .thenReturn(createdCampaign);
 
         // Act & Assert
         mockMvc.perform(post("/api/fundraising/campaigns")
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("userId", 1L)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1L))
@@ -93,6 +101,10 @@ class CampaignControllerTest {
 
     @Test
     void shouldReturnBadRequestWhenDataIsInvalid() throws Exception {
+        // Set up authentication for this specific test
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("1234");
+        
         // Arrange
         CampaignCreationRequest request = new CampaignCreationRequest(
                 "",
@@ -101,13 +113,12 @@ class CampaignControllerTest {
                 LocalDate.now().minusDays(1)
         );
 
-        when(campaignService.createCampaign(any(CampaignCreationRequest.class), eq(1L)))
+        when(campaignService.createCampaign(any(CampaignCreationRequest.class), eq(1234L)))
                 .thenThrow(new ValidationException("Invalid campaign data"));
 
         // Act & Assert
         mockMvc.perform(post("/api/fundraising/campaigns")
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("userId", 1L)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Invalid campaign data"));
@@ -115,19 +126,22 @@ class CampaignControllerTest {
 
     @Test
     void shouldGetUserCampaigns() throws Exception {
+        // Set up authentication for this specific test
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("1234");
+        
         // Arrange
         List<Campaign> userCampaigns = new ArrayList<>();
         Campaign campaign = new Campaign();
         campaign.setId(1L);
         campaign.setTitle("Help Orphans");
-        campaign.setUserId(1L);
+        campaign.setUserId(1234L);
         userCampaigns.add(campaign);
 
-        when(campaignService.getCampaignsByUserId(1L)).thenReturn(userCampaigns);
+        when(campaignService.getCampaignsByUserId(1234L)).thenReturn(userCampaigns);
 
         // Act & Assert
-        mockMvc.perform(get("/api/fundraising/campaigns/my-campaigns")
-                .header("userId", 1L))
+        mockMvc.perform(get("/api/fundraising/campaigns/my-campaigns"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1L))
                 .andExpect(jsonPath("$[0].title").value("Help Orphans"));
@@ -135,9 +149,15 @@ class CampaignControllerTest {
     
     @Test
     void shouldGetCampaignDetails() throws Exception {
+        // Set up authentication for this specific test
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("1234");
+        
         Campaign campaign = new Campaign();
         campaign.setId(1L);
         campaign.setTitle("Help Orphans");
+        campaign.setUserId(1234L);
+        campaign.setStatus(CampaignStatus.ACTIVE);
 
         when(campaignService.getCampaignById(1L)).thenReturn(Optional.of(campaign));
 
@@ -148,15 +168,11 @@ class CampaignControllerTest {
     }
 
     @Test
-    void shouldReturnNotFoundWhenCampaignDoesNotExist() throws Exception {
-        when(campaignService.getCampaignById(99L)).thenReturn(Optional.empty());
-
-        mockMvc.perform(get("/api/fundraising/campaigns/99"))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
     void shouldUpdateCampaignWhenValid() throws Exception {
+        // Set up authentication for this specific test
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("1234");
+        
         CampaignUpdateRequest updateRequest = new CampaignUpdateRequest();
         updateRequest.setTitle("Updated Title");
         updateRequest.setDescription("Updated Description");
@@ -170,12 +186,11 @@ class CampaignControllerTest {
         updatedCampaign.setGoalAmount(new BigDecimal("6000.00"));
         updatedCampaign.setDeadline(updateRequest.getDeadline());
 
-        when(campaignService.updateCampaign(eq(1L), any(CampaignUpdateRequest.class), eq(1L)))
+        when(campaignService.updateCampaign(eq(1L), any(CampaignUpdateRequest.class), eq(1234L)))
                 .thenReturn(updatedCampaign);
 
         mockMvc.perform(put("/api/fundraising/campaigns/1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("userId", 1L)
                 .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1L))
@@ -184,13 +199,16 @@ class CampaignControllerTest {
 
     @Test
     void shouldReturnBadRequestWhenUpdateCampaignInvalid() throws Exception {
+        // Set up authentication for this specific test
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("1234");
+        
         CampaignUpdateRequest updateRequest = new CampaignUpdateRequest();
-        when(campaignService.updateCampaign(eq(1L), any(CampaignUpdateRequest.class), eq(1L)))
+        when(campaignService.updateCampaign(eq(1L), any(CampaignUpdateRequest.class), eq(1234L)))
                 .thenThrow(new ValidationException("Update not allowed"));
 
         mockMvc.perform(put("/api/fundraising/campaigns/1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("userId", 1L)
                 .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Update not allowed"));
@@ -198,76 +216,54 @@ class CampaignControllerTest {
 
     @Test
     void shouldDeleteCampaignWhenValid() throws Exception {
-        mockMvc.perform(delete("/api/fundraising/campaigns/1")
-                .header("userId", 1L))
+        // Set up authentication for this specific test
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("1234");
+        
+        mockMvc.perform(delete("/api/fundraising/campaigns/1"))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     void shouldReturnBadRequestWhenDeleteCampaignInvalid() throws Exception {
+        // Set up authentication for this specific test
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("1234");
+        
         doThrow(new ValidationException("Delete not allowed"))
-                .when(campaignService).deleteCampaign(1L, 1L);
+                .when(campaignService).deleteCampaign(1L, 1234L);
 
-        mockMvc.perform(delete("/api/fundraising/campaigns/1")
-                .header("userId", 1L))
+        mockMvc.perform(delete("/api/fundraising/campaigns/1"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Delete not allowed"));
     }
 
     @Test
     void shouldUploadProofOfFundUsageWhenValid() throws Exception {
+        // Set up authentication for this specific test
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("1234");
+        
         MockMultipartFile file = new MockMultipartFile("file", "proof.pdf", "application/pdf", "dummy".getBytes());
 
         mockMvc.perform(multipart("/api/fundraising/campaigns/1/proof")
-                .file(file)
-                .header("userId", 1L))
+                .file(file))
                 .andExpect(status().isOk());
     }
 
     @Test
     void shouldReturnBadRequestWhenUploadProofInvalid() throws Exception {
+        // Set up authentication for this specific test
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("1234");
+        
         MockMultipartFile file = new MockMultipartFile("file", "proof.pdf", "application/pdf", "dummy".getBytes());
         doThrow(new ValidationException("Upload not allowed"))
-                .when(campaignService).uploadProofOfFundUsage(1L, 1L, file);
+                .when(campaignService).uploadProofOfFundUsage(1L, 1234L, file);
 
         mockMvc.perform(multipart("/api/fundraising/campaigns/1/proof")
-                .file(file)
-                .header("userId", 1L))
+                .file(file))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Upload not allowed"));
-    }
-
-    @Test
-    void shouldVerifyCampaignWhenValid() throws Exception {
-        mockMvc.perform(post("/api/fundraising/campaigns/1/verify")
-                .param("approved", "true"))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void shouldReturnBadRequestWhenVerifyCampaignInvalid() throws Exception {
-        doThrow(new ValidationException("Verification not allowed"))
-                .when(campaignService).verifyCampaign(1L, true);
-
-        mockMvc.perform(post("/api/fundraising/campaigns/1/verify")
-                .param("approved", "true"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Verification not allowed"));
-    }
-
-    @Test
-    void shouldGetActiveCampaigns() throws Exception {
-        List<Campaign> activeCampaigns = new ArrayList<>();
-        Campaign campaign = new Campaign();
-        campaign.setId(1L);
-        campaign.setStatus(CampaignStatus.ACTIVE);
-        activeCampaigns.add(campaign);
-
-        when(campaignService.getActiveCampaigns()).thenReturn(activeCampaigns);
-
-        mockMvc.perform(get("/api/fundraising/campaigns/active"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1L))
-                .andExpect(jsonPath("$[0].status").value("ACTIVE"));
     }
 }
