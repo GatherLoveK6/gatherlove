@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2rem;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #333;
+        }
+        .dashboard-section {
+            margin-bottom: 2rem;
+        }
+        .dashboard-section button {
+            padding: 0.5rem 1rem;
+            margin-top: 0.5rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Admin Dashboard</h1>
+
+<div class="dashboard-section">
+    <h2>Platform Statistics</h2>
+    <button onclick="location.href='/admin/stats'">View Statistics</button>
+</div>
+
+<div class="dashboard-section">
+    <h2>Announcements</h2>
+    <button onclick="location.href='/admin/announcements'">Manage Announcements</button>
+</div>
+
+<div class="dashboard-section">
+    <h2>Campaigns</h2>
+    <button onclick="location.href='/admin/campaigns'">Review Campaigns</button>
+</div>
+
+<div class="dashboard-section">
+    <h2>Donations</h2>
+    <button onclick="location.href='/admin/donations'">View Donation History</button>
+</div>
+
+<div class="dashboard-section">
+    <h2>Transparency Reports</h2>
+    <button onclick="location.href='/admin/reports'">View Reports</button>
+</div>
+
+<div class="dashboard-section">
+    <h2>User Management</h2>
+    <button onclick="location.href='/admin/users'">Manage Users</button>
+</div>
+
+</body>
+</html>
