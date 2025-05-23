@@ -1,43 +1,45 @@
 package k6.gatherlove.donation.repository;
 
-
 import k6.gatherlove.donation.model.Donation;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import java.util.List;
-import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 class DonationRepositoryTest {
+
     @Autowired
-    private DonationRepository repository;
+    private DonationRepository repo;
 
     @Test
-    void testSaveAndFindById() {
-        Donation donation = new Donation("testUser", 25.0, "campaignTest");
-        Donation saved = repository.save(donation);
+    void saveAndFindByUserId() {
+        Donation d1 = new Donation("userA", 42.0, "camp1");
+        repo.save(d1);
 
-        Optional<Donation> found = repository.findById(saved.getId());
-        assertTrue(found.isPresent(), "Donation should be found after saving");
-        assertEquals(saved.getId(), found.get().getId(), "The IDs must match");
-        assertEquals("testUser", found.get().getUserId());
+        List<Donation> donations = repo.findByUserId("userA");
+
+        assertThat(donations)
+                .hasSize(1)
+                .first()
+                .extracting(Donation::getAmount, Donation::getCampaignId)
+                .containsExactly(42.0, "camp1");
     }
 
     @Test
-    void testFindAll() {
-        Donation d1 = new Donation("userA", 10.0, "campaign1");
-        Donation d2 = new Donation("userB", 20.0, "campaign2");
+    void saveAndFindByCampaignId() {
+        Donation d2 = new Donation("userB", 13.0, "campX");
+        repo.save(d2);
 
-        repository.save(d1);
-        repository.save(d2);
+        List<Donation> result = repo.findByCampaignId("campX");
 
-        List<Donation> all = repository.findAll();
-        assertEquals(2, all.size(), "Repository should return 2 donations");
+        assertThat(result)
+                .hasSize(1)
+                .first()
+                .extracting(Donation::getUserId, Donation::getAmount)
+                .containsExactly("userB", 13.0);
     }
 }
