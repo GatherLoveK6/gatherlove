@@ -1,160 +1,313 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>GatherLove Report Manager</title>
+  <meta charset="UTF-8">
+  <title>GatherLove Report Manager</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background-color: #f7f9fc;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #444;
+    }
+
+    h2 {
+      margin-top: 30px;
+      color: #2a5885;
+    }
+
+    form, .section {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      margin-bottom: 30px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    button {
+      background-color: #2a5885;
+      color: white;
+      padding: 10px 20px;
+      font-size: 14px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #1f4569;
+    }
+
+    .error {
+      color: red;
+      font-weight: bold;
+      margin-top: -10px;
+    }
+
+    .report-group {
+      background-color: #ffffff;
+      border: 1px solid #ddd;
+      border-left: 4px solid #2a5885;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 4px;
+    }
+
+    .report-group h3 {
+      margin-top: 0;
+      color: #2a5885;
+    }
+
+    .report {
+      padding: 10px;
+      border-top: 1px solid #eee;
+    }
+
+    .report:first-child {
+      border-top: none;
+    }
+
+    .report button {
+      margin-top: 8px;
+      background-color: #e74c3c;
+    }
+
+    .report button:hover {
+      background-color: #c0392b;
+    }
+
+    #verifyOutput {
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
-<h1>GatherLove Report Feature</h1>
+  <h1>GatherLove Report Manager</h1>
 
-<!-- Create Report -->
-<h2>Create Report</h2>
-<form id="createForm">
-    <input type="text" id="createUserId" placeholder="User ID" required><br>
-    <input type="text" id="createCampaignId" placeholder="Campaign" required><br>
-    <input type="text" id="createTitle" placeholder="Title" required><br>
-    <textarea id="createDescription" placeholder="Description" required></textarea><br>
+  <!-- Create Report -->
+  <h2>Create Report</h2>
+  <form id="createForm">
+    <select id="createCampaignId" required>
+      <option value="" disabled selected>Select a campaign</option>
+    </select>
+
+    <input type="text" id="createTitle" placeholder="Title" required>
+
+    <textarea id="createDescription" placeholder="Description" required></textarea>
 
     <select id="createViolationType" required>
-        <option value="Fraud">Fraud</option>
-        <option value="Inappropriate Content">Inappropriate Content</option>
-        <option value="Spam">Spam</option>
-        <option value="Other">Other</option>
-    </select><br>
+      <option value="Fraud">Fraud</option>
+      <option value="Inappropriate Content">Inappropriate Content</option>
+      <option value="Spam">Spam</option>
+      <option value="Other">Other</option>
+    </select>
 
     <button type="submit">Create Report</button>
-</form>
+    <div id="createErrorOutput" class="error"></div>
+  </form>
 
-<hr>
+  <!-- Verify Campaign -->
+  <h2>Verify Campaign</h2>
+  <div class="section">
+    <select id="verifyCampaignId" required>
+      <option value="" disabled selected>Select a campaign</option>
+    </select>
+    <button onclick="verifyCampaign()">Verify</button>
+    <div id="verifyOutput" style="font-weight: bold;"></div>
+  </div>
 
-<!-- Get Reports -->
-<h2>Get Reports</h2>
-<input type="text" id="getUserId" placeholder="User ID (optional if ADMIN)">
-<input type="text" id="getRole" placeholder="Role (e.g. USER or ADMIN)" required>
-<button onclick="getReports()">Fetch Reports</button>
-<div id="reportsOutput"></div>
+  <!-- Get Reports -->
+  <h2>All Reports</h2>
+  <div class="section">
+    <button onclick="getReports()">🔄 Refresh Reports</button>
+    <div id="reportsOutput"></div>
+  </div>
 
-<hr>
+  <script>
+    const campaignIdToTitle = {};
 
-<!-- Verify Campaign -->
-<h2>Verify Campaign</h2>
-<input type="text" id="verifyCampaignId" placeholder="Campaign to verify" required>
-<input type="text" id="verifyRole" placeholder="Role (e.g. ADMIN)" required>
-<button onclick="verifyCampaign()">Verify</button>
-<div id="verifyOutput"></div>
-
-<script>
-    // CREATE REPORT
-    document.getElementById("createForm").addEventListener("submit", async function (e) {
-        e.preventDefault();
-
-        const payload = {
-            userId: document.getElementById("createUserId").value,
-            campaignId: document.getElementById("createCampaignId").value,
-            title: document.getElementById("createTitle").value,
-            description: document.getElementById("createDescription").value,
-            violationType: document.getElementById("createViolationType").value
-        };
-
-        const response = await fetch("/api/reports", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+    async function loadCampaigns() {
+      try {
+        const response = await fetch("/api/fundraising/campaigns/active", {
+          method: "GET",
+          credentials: "include"
         });
 
-        alert(await response.text());
+        if (!response.ok) return console.error("Failed to fetch campaigns.");
+
+        const campaigns = await response.json();
+        const createDropdown = document.getElementById("createCampaignId");
+        const verifyDropdown = document.getElementById("verifyCampaignId");
+
+        createDropdown.innerHTML = '<option value="" disabled selected>Select a campaign</option>';
+        verifyDropdown.innerHTML = '<option value="" disabled selected>Select a campaign</option>';
+
+        campaigns.forEach(c => {
+          campaignIdToTitle[c.id] = c.title;
+
+          const opt1 = new Option(c.title, c.id);
+          const opt2 = new Option(c.title, c.id);
+
+          createDropdown.add(opt1);
+          verifyDropdown.add(opt2);
+        });
+      } catch (err) {
+        console.error("Error loading campaigns:", err);
+      }
+    }
+
+    document.getElementById("createForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const campaignId = document.getElementById("createCampaignId").value.trim();
+      const title = document.getElementById("createTitle").value.trim();
+      const description = document.getElementById("createDescription").value.trim();
+      const violationType = document.getElementById("createViolationType").value;
+      const errorOutput = document.getElementById("createErrorOutput");
+      errorOutput.textContent = "";
+
+      try {
+        const response = await fetch("/api/reports", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ campaignId, title, description, violationType })
+        });
+
+        if (response.status === 403) {
+          errorOutput.textContent = "Admins are not allowed to create reports.";
+        } else if (!response.ok) {
+          const errorText = await response.text();
+          errorOutput.textContent = "Failed to create report: " + errorText;
+        } else {
+          const result = await response.json();
+          alert("Report created successfully! Report ID: " + result.id);
+          getReports();
+        }
+      } catch (err) {
+        console.error("Unexpected error:", err);
+        errorOutput.textContent = "Only users can create reports.";
+      }
     });
 
-    // GET REPORTS - Grouped by campaignId
     async function getReports() {
-        const userId = document.getElementById("getUserId").value.trim();
-        const role = document.getElementById("getRole").value.trim().toUpperCase();
+      const response = await fetch("/api/reports", {
+        method: "GET",
+        credentials: "include"
+      });
 
-        let url = `/api/reports?role=${encodeURIComponent(role)}`;
-        if (role === "USER" && userId) {
-            url += `&userId=${encodeURIComponent(userId)}`;
-        }
+      const container = document.getElementById("reportsOutput");
+      container.innerHTML = "";
 
-        const response = await fetch(url);
-        const container = document.getElementById("reportsOutput");
-        container.innerHTML = "";
+      if (!response.ok) return container.innerText = "Error fetching reports.";
 
-        if (!response.ok) {
-            container.innerText = "Error fetching reports.";
-            return;
-        }
+      const reports = await response.json();
+      if (reports.length === 0) return container.innerText = "No reports found.";
 
-        const reports = await response.json();
-        if (reports.length === 0) {
-            container.innerText = "No reports found.";
-            return;
-        }
+      const grouped = {};
+      for (const r of reports) {
+        if (!grouped[r.campaignId]) grouped[r.campaignId] = [];
+        grouped[r.campaignId].push(r);
+      }
 
-        // Group reports by campaignId
-        const grouped = {};
-        for (const r of reports) {
-            if (!grouped[r.campaignId]) {
-                grouped[r.campaignId] = [];
-            }
-            grouped[r.campaignId].push(r);
-        }
+      Object.entries(grouped).forEach(([campaignId, reports]) => {
+        const campaignTitle = campaignIdToTitle[campaignId] || campaignId;
+        const groupDiv = document.createElement("div");
+        groupDiv.className = "report-group";
+        groupDiv.innerHTML = `<h3>Campaign: ${campaignTitle}</h3>`;
 
-        // Render each group
-        Object.entries(grouped).forEach(([campaignId, reports]) => {
-            const groupDiv = document.createElement("div");
-            groupDiv.innerHTML = `<h3>Campaign: ${campaignId}</h3>`;
+        reports.forEach(r => {
+          const div = document.createElement("div");
+          div.className = "report";
+          div.innerHTML = `
+            <strong>Report ID:</strong> ${r.id}<br>
+            <strong>Reported by:</strong> ${r.reportedBy}<br>
+            <strong>Type:</strong> ${r.violationType}<br>
+            <strong>Title:</strong> ${r.title}<br>
+            <strong>Description:</strong> ${r.description || "None"}<br>
+            <strong>Created at:</strong> ${r.createdAt}<br>
+            <strong>Verified:</strong> ${r.verified ? "✅ Yes" : "❌ No"}<br>
+          `;
 
-            reports.forEach(r => {
-                const div = document.createElement("div");
-                div.innerHTML = `
-                    <strong>Report ID:</strong> ${r.id}<br>
-                    <strong>Reported by:</strong> ${r.reportedBy}<br>
-                    <strong>Type:</strong> ${r.violationType}<br>
-                    <strong>Title:</strong> ${r.title}<br>
-                    <strong>Description:</strong> ${r.description || "None"}<br>
-                    <strong>Created at:</strong> ${r.createdAt}<br>
-                    <strong>Verified:</strong> ${r.verified ? "✅ Yes" : "❌ No"}<br>
-                `;
+          const deleteBtn = document.createElement("button");
+          deleteBtn.innerText = "Delete";
+          deleteBtn.onclick = async () => {
+            const confirmDelete = confirm(`Delete report ID ${r.id}?`);
+            if (!confirmDelete) return;
 
-                if (role === "ADMIN") {
-                    const deleteBtn = document.createElement("button");
-                    deleteBtn.innerText = "Delete";
-                    deleteBtn.onclick = async () => {
-                        const confirmDelete = confirm(`Delete report ID ${r.id}?`);
-                        if (!confirmDelete) return;
-
-                        const delRes = await fetch(`/api/reports/${r.id}?role=ADMIN`, { method: "DELETE" });
-                        if (delRes.ok) {
-                            alert("Deleted report ID " + r.id);
-                            getReports(); // Refresh the list
-                        } else {
-                            alert("Failed to delete report.");
-                        }
-                    };
-                    div.appendChild(deleteBtn);
-                }
-
-                const hr = document.createElement("hr");
-                div.appendChild(hr);
-                groupDiv.appendChild(div);
+            const delRes = await fetch(`/api/reports/${r.id}`, {
+              method: "DELETE",
+              credentials: "include"
             });
 
-            container.appendChild(groupDiv);
+            if (delRes.ok) {
+              alert(`Deleted report ID ${r.id}`);
+              getReports();
+            } else if (delRes.status === 403) {
+              alert("Only admins can delete reports.");
+            } else {
+              alert("Failed to delete report.");
+            }
+          };
+
+          div.appendChild(deleteBtn);
+          groupDiv.appendChild(div);
         });
+
+        container.appendChild(groupDiv);
+      });
     }
 
-    // VERIFY CAMPAIGN
     async function verifyCampaign() {
-        const campaignId = document.getElementById("verifyCampaignId").value.trim();
-        const role = document.getElementById("verifyRole").value.trim().toUpperCase();
+      const campaignId = document.getElementById("verifyCampaignId").value.trim();
+      const output = document.getElementById("verifyOutput");
+      output.textContent = "";
 
-        const response = await fetch(`/api/reports/campaigns/${campaignId}/verify?role=${encodeURIComponent(role)}`, {
-            method: "PUT"
+      try {
+        const response = await fetch(`/api/reports/campaigns/${campaignId}/verify`, {
+          method: "PUT",
+          credentials: "include"
         });
 
-        const result = await response.text();
-        document.getElementById("verifyOutput").innerText = result;
+        const text = await response.text();
+
+        if (response.ok) {
+          output.style.color = "green";
+          output.textContent = text;
+          getReports();
+        } else if (response.status === 403) {
+          output.style.color = "black";
+          output.textContent = "Only admins can verify campaigns.";
+        } else {
+          output.style.color = "red";
+          output.textContent = "Failed to verify campaign: " + text;
+        }
+      } catch (err) {
+        console.error("Verification error:", err);
+        output.style.color = "black";
+        output.textContent = "Only admins can verify campaigns.";
+      }
     }
-</script>
+
+    window.addEventListener("DOMContentLoaded", () => {
+      loadCampaigns();
+      getReports();
+    });
+  </script>
 </body>
 </html>
