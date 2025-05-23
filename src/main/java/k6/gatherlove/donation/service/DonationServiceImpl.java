@@ -11,65 +11,62 @@ import java.util.List;
 public class DonationServiceImpl implements DonationService {
 
     public static final double INITIAL_USER_BALANCE = 100.0;
-
     private double userBalance = INITIAL_USER_BALANCE;
 
-    private final DonationRepository donationRepository;
+    private final DonationRepository repo;
 
-    public DonationServiceImpl(DonationRepository donationRepository) {
-        this.donationRepository = donationRepository;
+    public DonationServiceImpl(DonationRepository repo) {
+        this.repo = repo;
     }
 
     @Override
     @Transactional
     public Donation createDonation(String userId, double amount, String campaignId) {
-        checkFunds(amount);
+        if (amount > userBalance) {
+            throw new IllegalStateException("Insufficient balance to create donation!");
+        }
         userBalance -= amount;
 
+        // ← instantiating with the new 3-arg ctor
         Donation donation = new Donation(userId, amount, campaignId);
         donation.setConfirmed(true);
 
-        // save() returns the managed entity (with ID populated)
-        return donationRepository.save(donation);
+        return repo.save(donation);
     }
 
     @Override
     @Transactional
     public void cancelDonation(String donationId) {
-        Donation donation = donationRepository.findById(donationId)
+        Donation donation = repo.findById(donationId)
                 .orElseThrow(() -> new IllegalArgumentException("Donation does not exist!"));
 
         if (!donation.isCanceled()) {
             donation.setCanceled(true);
-            donationRepository.save(donation);
+            repo.save(donation);
             userBalance += donation.getAmount();
         }
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Donation findDonationById(String donationId) {
-        return donationRepository.findById(donationId)
-                .orElse(null);
+        return repo.findById(donationId).orElse(null);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Donation> listAllDonations() {
-        return donationRepository.findAll();
+        return repo.findAll();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Donation> listDonationsByUser(String userId) {
-        return donationRepository.findByUserId(userId);
+        return repo.findByUserId(userId);
     }
 
     @Override
     public double getUserBalance() {
         return userBalance;
-    }
-
-    private void checkFunds(double amount) {
-        if (amount > userBalance) {
-            throw new IllegalStateException("Insufficient balance to create donation!");
-        }
     }
 }

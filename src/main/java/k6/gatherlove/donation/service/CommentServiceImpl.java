@@ -5,6 +5,7 @@ import k6.gatherlove.donation.repository.CommentRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -27,6 +28,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional
     public Comment addComment(String campaignId, String userId, String text) {
         if (text == null || text.isBlank()) {
             throw new IllegalArgumentException("Comment text cannot be empty");
@@ -35,7 +37,7 @@ public class CommentServiceImpl implements CommentService {
         Comment saved = repo.save(new Comment(campaignId, userId, text));
 
         // notify fundraiser via REST call, only if we have a URL
-        if (notificationBaseUrl != null && !notificationBaseUrl.isBlank()) {
+        if (!notificationBaseUrl.isBlank()) {
             try {
                 rest.postForEntity(
                         notificationBaseUrl + "/notifications/comments",
@@ -56,6 +58,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Comment> listComments(String campaignId) {
         return repo.findByCampaignId(campaignId);
     }

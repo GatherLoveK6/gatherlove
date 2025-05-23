@@ -1,5 +1,6 @@
 package k6.gatherlove.donation.repository;
 
+
 import k6.gatherlove.donation.model.Donation;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 class DonationRepositoryTest {
-
     @Autowired
     private DonationRepository repository;
 
