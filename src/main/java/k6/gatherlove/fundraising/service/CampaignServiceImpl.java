@@ -94,5 +94,12 @@ public class CampaignServiceImpl implements CampaignService {
                 .filter(c -> c.getStatus() == CampaignStatus.ACTIVE)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<Campaign> getPendingCampaigns() {
+        return campaignRepository.findAll().stream()
+                .filter(c -> c.getStatus() == CampaignStatus.PENDING_VERIFICATION)
+                .collect(Collectors.toList());
+    }
 }
 
