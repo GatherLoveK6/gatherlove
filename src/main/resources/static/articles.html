@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GatherLove Article Management</title>
+</head>
+<body>
+<h1>GatherLove Article Management</h1>
+
+<!-- CREATE ARTICLE -->
+<h2>Create Article</h2>
+<form id="createForm">
+    <input type="text" id="title" placeholder="Title" required><br>
+    <textarea id="content" placeholder="Content" required></textarea><br>
+    <input type="text" id="author" placeholder="Author" required><br>
+    <button type="submit">Create Article</button>
+</form>
+
+<hr>
+
+<!-- READ ALL ARTICLES -->
+<h2>All Articles</h2>
+<button onclick="getAllArticles()">Fetch Articles</button>
+<div id="articlesOutput"></div>
+
+<hr>
+
+<!-- UPDATE ARTICLE -->
+<h2>Update Article</h2>
+<form id="updateForm">
+    <input type="number" id="updateId" placeholder="Article ID" required><br>
+    <input type="text" id="updateTitle" placeholder="New Title" required><br>
+    <textarea id="updateContent" placeholder="New Content" required></textarea><br>
+    <input type="text" id="updateAuthor" placeholder="New Author" required><br>
+    <button type="submit">Update Article</button>
+</form>
+
+<hr>
+
+<!-- DELETE ARTICLE -->
+<h2>Delete Article</h2>
+<input type="number" id="deleteId" placeholder="Article ID" required>
+<button onclick="deleteArticle()">Delete</button>
+<div id="deleteStatus"></div>
+
+<script>
+    // CREATE ARTICLE
+    document.getElementById("createForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const payload = {
+            title: document.getElementById("title").value,
+            content: document.getElementById("content").value,
+            author: document.getElementById("author").value
+        };
+        const response = await fetch("/articles", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        alert(await response.text());
+    });
+
+    // GET ALL ARTICLES
+    async function getAllArticles() {
+        const response = await fetch("/articles");
+        const output = document.getElementById("articlesOutput");
+        output.innerHTML = "";
+
+        if (!response.ok) {
+            output.innerText = "Error fetching articles.";
+            return;
+        }
+
+        const articles = await response.json();
+        if (articles.length === 0) {
+            output.innerText = "No articles available.";
+            return;
+        }
+
+        articles.forEach(article => {
+            const div = document.createElement("div");
+            div.innerHTML = `
+          <strong>ID:</strong> ${article.id}<br>
+          <strong>Title:</strong> ${article.title}<br>
+          <strong>Author:</strong> ${article.author}<br>
+          <strong>Content:</strong> ${article.content}<br>
+          <strong>Likes:</strong> ${article.likes} | <strong>Comments:</strong> ${article.comments}<br>
+          <hr>
+        `;
+            output.appendChild(div);
+        });
+    }
+
+    // UPDATE ARTICLE
+    document.getElementById("updateForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const id = document.getElementById("updateId").value;
+        const payload = {
+            title: document.getElementById("updateTitle").value,
+            content: document.getElementById("updateContent").value,
+            author: document.getElementById("updateAuthor").value
+        };
+        const response = await fetch(`/articles/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        alert(await response.text());
+    });
+
+    // DELETE ARTICLE
+    async function deleteArticle() {
+        const id = document.getElementById("deleteId").value;
+        const response = await fetch(`/articles/${id}`, {
+            method: "DELETE"
+        });
+        document.getElementById("deleteStatus").innerText = await response.text();
+    }
+</script>
+</body>
+</html>
