@@ -4,7 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @ControllerAdvice
-public class GlobalExceptionHandler {
+public class DonationGlobalExceptionHandler {
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<String> handleBadRequest(IllegalStateException ex) {
