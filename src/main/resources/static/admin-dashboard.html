@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2rem;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #333;
+        }
+        .dashboard-section {
+            margin-bottom: 2rem;
+        }
+        .dashboard-section button {
+            padding: 0.5rem 1rem;
+            margin-top: 0.5rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Admin Dashboard</h1>
+
+<div class="dashboard-section">
+    <h2>Platform Statistics</h2>
+    <button onclick="loadStatistics()">View Statistics</button>
+    <div id="stats-output"></div>
+</div>
+
+<script>
+    async function loadStatistics() {
+        const output = document.getElementById("stats-output");
+        output.innerHTML = "Loading...";
+
+        try {
+            const res = await fetch("/admin/stats");
+            if (!res.ok) throw new Error("Failed to fetch stats");
+            const stats = await res.json();
+
+            output.innerHTML = `
+                <p>Total Campaigns: ${stats.totalCampaigns}</p>
+                <p>Total Donations: ${stats.totalDonations}</p>
+                <p>Number of Users: ${stats.totalUsers}</p>
+            `;
+        } catch (err) {
+            output.innerHTML = "Error loading statistics.";
+            console.error(err);
+        }
+    }
+</script>
+
+<div class="dashboard-section">
+    <h2>Announcements</h2>
+
+    <h4>Create New Announcement</h4>
+    <input type="text" id="announcementTitle" placeholder="Title" required><br>
+    <textarea id="announcementContent" placeholder="Content" required></textarea><br>
+    <button onclick="createAnnouncement()">Send Announcement</button>
+
+    <h4>All Announcements</h4>
+    <button onclick="loadAnnouncements()">Load Announcements</button>
+    <div id="announcementsOutput"></div>
+</div>
+
+<script>
+    async function createAnnouncement() {
+        const title = document.getElementById("announcementTitle").value.trim();
+        const content = document.getElementById("announcementContent").value.trim();
+
+        if (!title || !content) {
+            alert("Please fill in both fields.");
+            return;
+        }
+
+        try {
+            const res = await fetch("/admin/announcements", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, content })
+            });
+
+            if (res.ok) {
+                alert("Announcement sent successfully!");
+                document.getElementById("announcementTitle").value = "";
+                document.getElementById("announcementContent").value = "";
+                loadAnnouncements(); // refresh list
+            } else {
+                alert("Failed to send announcement.");
+            }
+        } catch (err) {
+            console.error("Error creating announcement:", err);
+        }
+    }
+
+    async function loadAnnouncements() {
+        const container = document.getElementById("announcementsOutput");
+        container.innerHTML = "Loading...";
+
+        try {
+            const res = await fetch("/admin/announcements/all"); // Adjust path if needed
+            if (!res.ok) throw new Error("Could not fetch announcements");
+
+            const announcements = await res.json();
+            container.innerHTML = "";
+
+            announcements.forEach(a => {
+                const div = document.createElement("div");
+                div.innerHTML = `
+                    <strong>${a.title}</strong><br>
+                    ${a.content}<br>
+                    <hr>
+                `;
+                container.appendChild(div);
+            });
+        } catch (err) {
+            container.innerHTML = "Failed to load announcements.";
+            console.error(err);
+        }
+    }
+</script>
+
+<div class="dashboard-section">
+    <h2>Campaigns</h2>
+    <label for="statusSelect">Select Status:</label>
+    <select id="statusSelect">
+        <option value="PENDING">Pending</option>
+        <option value="APPROVED">Approved</option>
+        <option value="REJECTED">Rejected</option>
+    </select>
+    <button onclick="loadCampaigns()">Load Campaigns</button>
+    <div id="campaigns-output"></div>
+</div>
+
+<script>
+    async function loadCampaigns() {
+        const status = document.getElementById("statusSelect").value;
+        const output = document.getElementById("campaigns-output");
+        output.innerHTML = "Loading...";
+
+        try {
+            const res = await fetch(`/admin/campaigns?status=${status}`);
+            if (!res.ok) throw new Error("Failed to fetch campaigns");
+
+            const campaigns = await res.json();
+            output.innerHTML = "";
+
+            campaigns.forEach(campaign => {
+                const div = document.createElement("div");
+                div.innerHTML = `
+                    <strong>ID:</strong> ${campaign.id}<br>
+                    <strong>Title:</strong> ${campaign.title}<br>
+                    <strong>Status:</strong> ${campaign.status}<br>
+                    <label>Update Status:</label>
+                    <select id="status-${campaign.id}">
+                        <option value="APPROVED">Approve</option>
+                        <option value="REJECTED">Reject</option>
+                    </select>
+                    <button onclick="updateCampaignStatus(${campaign.id})">Update</button>
+                    <hr>
+                `;
+                output.appendChild(div);
+            });
+        } catch (err) {
+            output.innerHTML = "Error loading campaigns.";
+            console.error(err);
+        }
+    }
+
+    async function updateCampaignStatus(campaignId) {
+        const newStatus = document.getElementById(`status-${campaignId}`).value;
+
+        try {
+            const res = await fetch(`/admin/campaigns/${campaignId}/status`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            if (res.ok) {
+                alert(`Campaign ${campaignId} updated to ${newStatus}`);
+                loadCampaigns(); // Refresh list
+            } else {
+                alert("Failed to update campaign status");
+            }
+        } catch (err) {
+            console.error("Error updating campaign:", err);
+        }
+    }
+</script>
+
+<div class="dashboard-section">
+    <h2>Donations</h2>
+    <input type="text" id="donationCampaignId" placeholder="Campaign ID" required>
+    <button onclick="fetchDonationHistory()">View Donation History</button>
+    <div id="donationHistoryOutput"></div>
+</div>
+
+<script>
+    async function fetchDonationHistory() {
+        const campaignId = document.getElementById("donationCampaignId").value.trim();
+        const output = document.getElementById("donationHistoryOutput");
+
+        if (!campaignId) {
+            alert("Please enter a campaign ID.");
+            return;
+        }
+
+        output.innerHTML = "Loading...";
+
+        try {
+            const res = await fetch(`/admin/donations/history?campaignId=${campaignId}`);
+            if (!res.ok) throw new Error("Fetch failed");
+
+            const donations = await res.json();
+            output.innerHTML = "";
+
+            donations.forEach(d => {
+                const div = document.createElement("div");
+                div.innerHTML = `
+                    <strong>Donor:</strong> ${d.donorName || "Anonymous"}<br>
+                    <strong>Amount:</strong> ${d.amount}<br>
+                    <strong>Date:</strong> ${d.date}<br><hr>
+                `;
+                output.appendChild(div);
+            });
+        } catch (err) {
+            output.innerHTML = "Failed to load donations.";
+            console.error(err);
+        }
+    }
+</script>
+
+<div class="dashboard-section">
+    <h2>Transparency Reports</h2>
+    <input type="text" id="reportCampaignId" placeholder="Campaign ID" required>
+    <button onclick="fetchTransparencyReports()">View Reports</button>
+    <div id="transparencyReportsOutput"></div>
+</div>
+
+<script>
+    async function fetchTransparencyReports() {
+        const campaignId = document.getElementById("reportCampaignId").value.trim();
+        const output = document.getElementById("transparencyReportsOutput");
+
+        if (!campaignId) {
+            alert("Please enter a campaign ID.");
+            return;
+        }
+
+        output.innerHTML = "Loading...";
+
+        try {
+            const res = await fetch(`/admin/reports?campaignId=${campaignId}`);
+            if (!res.ok) throw new Error("Fetch failed");
+
+            const reports = await res.json();
+            output.innerHTML = "";
+
+            reports.forEach(r => {
+                const div = document.createElement("div");
+                div.innerHTML = `
+                    <strong>Report ID:</strong> ${r.id}<br>
+                    <strong>Description:</strong> ${r.description}<br>
+                    <strong>Verified:</strong> ${r.verified ? "Yes" : "No"}<br><hr>
+                `;
+                output.appendChild(div);
+            });
+        } catch (err) {
+            output.innerHTML = "Failed to load reports.";
+            console.error(err);
+        }
+    }
+</script>
+
+<div class="dashboard-section">
+    <h2>User Management</h2>
+    <button onclick="fetchUsers()">Load All Users</button>
+    <div id="usersOutput"></div>
+</div>
+
+<script>
+    async function fetchUsers() {
+        const output = document.getElementById("usersOutput");
+        output.innerHTML = "Loading...";
+
+        try {
+            const res = await fetch("/admin/users"); // adjust if pagination/filter needed
+            if (!res.ok) throw new Error("Fetch failed");
+
+            const users = await res.json();
+            output.innerHTML = "";
+
+            users.forEach(u => {
+                const div = document.createElement("div");
+                div.innerHTML = `
+                    <strong>ID:</strong> ${u.id}<br>
+                    <strong>Name:</strong> ${u.name}<br>
+                    <strong>Email:</strong> ${u.email}<br>
+                    <strong>Status:</strong> ${u.status}<br><hr>
+                `;
+                output.appendChild(div);
+            });
+        } catch (err) {
+            output.innerHTML = "Failed to load users.";
+            console.error(err);
+        }
+    }
+</script>
+
+</body>
+</html>
