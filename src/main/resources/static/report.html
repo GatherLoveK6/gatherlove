@@ -122,13 +122,23 @@
   </form>
 
   <!-- Verify Campaign -->
-  <h2>Verify Campaign</h2>
+  <h2>Verify Report by Campaign</h2>
   <div class="section">
     <select id="verifyCampaignId" required>
       <option value="" disabled selected>Select a campaign</option>
     </select>
     <button onclick="verifyCampaign()">Verify</button>
     <div id="verifyOutput" style="font-weight: bold;"></div>
+  </div>
+
+  <!-- Verify Pending Campaign -->
+  <h2>Verify Pending Campaign</h2>
+  <div class="section">
+    <select id="pendingCampaignId" required>
+      <option value="" disabled selected>Select a pending campaign</option>
+    </select>
+    <button onclick="verifyPendingCampaign()">✅ Approve</button>
+    <div id="verifyPendingOutput" style="font-weight: bold; margin-top: 10px;"></div>
   </div>
 
   <!-- Get Reports -->
@@ -304,8 +314,66 @@
       }
     }
 
+    async function loadPendingCampaigns() {
+      try {
+        const response = await fetch("/api/fundraising/campaigns/pending", {
+          method: "GET",
+          credentials: "include"
+        });
+
+        if (!response.ok) {
+          console.error("Failed to fetch pending campaigns.");
+          return;
+        }
+
+        const campaigns = await response.json();
+        const pendingDropdown = document.getElementById("pendingCampaignId");
+        pendingDropdown.innerHTML = '<option value="" disabled selected>Select a pending campaign</option>';
+
+        campaigns.forEach(c => {
+          campaignIdToTitle[c.id] = c.title;
+          const option = new Option(c.title, c.id);
+          pendingDropdown.add(option);
+        });
+      } catch (err) {
+        console.error("Error loading pending campaigns:", err);
+      }
+    }
+
+    async function verifyPendingCampaign() {
+      const campaignId = document.getElementById("pendingCampaignId").value.trim();
+      const output = document.getElementById("verifyPendingOutput");
+      output.textContent = "";
+
+      try {
+        const response = await fetch(`/api/fundraising/campaigns/${campaignId}/verify?approved=true`, {
+          method: "POST",
+          credentials: "include"
+        });
+
+        if (response.ok) {
+          output.style.color = "green";
+          output.textContent = "Campaign approved successfully!";
+          await loadPendingCampaigns();
+          await getReports();
+        } else if (response.status === 403) {
+          output.style.color = "black";
+          output.textContent = "Only admins can verify campaigns.";
+        } else {
+          const text = await response.text();
+          output.style.color = "red";
+          output.textContent = "Failed to verify campaign: " + text;
+        }
+      } catch (err) {
+        console.error("Verification error:", err);
+        output.style.color = "black";
+        output.textContent = "Only admins can verify campaigns.";
+      }
+    }
+
     window.addEventListener("DOMContentLoaded", () => {
       loadCampaigns();
+      loadPendingCampaigns();
       getReports();
     });
   </script>
