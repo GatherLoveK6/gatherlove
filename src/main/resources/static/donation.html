@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Donate & Comment</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 1rem; }
+        label { display: block; margin: .5rem 0; }
+        input, textarea { width: 100%; padding: .5rem; margin-bottom: 1rem; }
+        button { padding: .5rem 1rem; margin-right: .5rem; }
+        .error { color: #c00; }
+        .success { color: #080; }
+        ul { padding-left: 1.2rem; }
+        hr { margin: 2rem 0; }
+    </style>
+</head>
+<body>
+<!-- Make a Donation -->
+<h1>Make a Donation</h1>
+<form id="donation-form">
+    <label>Your User ID:
+        <input type="text" id="userId" value="user1" required>
+    </label>
+    <label>Campaign ID:
+        <input type="text" id="campaignId" placeholder="e.g. campA" required>
+    </label>
+    <label>Amount:
+        <input type="number" id="amount" min="0.01" step="0.01" required>
+    </label>
+    <button type="submit">Donate</button>
+</form>
+<p id="donation-msg"></p>
+
+
+<!-- Donation History -->
+<h2>Your Donation History</h2>
+<button id="view-history">View My Donation History</button>
+<a href="donation-history.html" class="button">See Full Donation History</a>
+<ul id="history"></ul>
+
+
+<hr>
+
+
+<!-- Leave a Comment -->
+<h1>Leave a Comment</h1>
+<form id="comment-form">
+    <label>Your User ID:
+        <input type="text" id="cUserId" value="user1" required>
+    </label>
+    <label>Campaign ID:
+        <input type="text" id="cCampaignId" placeholder="e.g. campA" required>
+    </label>
+    <label>Comment:
+        <textarea id="commentText" rows="3" placeholder="Your supportive message…" required></textarea>
+    </label>
+    <button type="submit">Post Comment</button>
+</form>
+<p id="comment-msg"></p>
+
+
+<h2>Comments</h2>
+<button id="refresh-comments">Refresh Comments</button>
+<ul id="comments"></ul>
+
+
+<script>
+    const API = '/donations';
+
+
+    // — Donation section —
+    const dForm   = document.getElementById('donation-form');
+    const dMsg    = document.getElementById('donation-msg');
+    const histEl  = document.getElementById('history');
+    const viewBtn = document.getElementById('view-history');
+
+
+    viewBtn.addEventListener('click', () => loadHistory(getUser()));
+
+
+    dForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        clearMsg(dMsg);
+        try {
+            const resp = await fetch(API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId:     getUser(),
+                    campaignId: document.getElementById('campaignId').value.trim(),
+                    amount:     parseFloat(document.getElementById('amount').value)
+                })
+            });
+            if (!resp.ok) throw new Error(await resp.text());
+            const d = await resp.json();
+            showMsg(dMsg, `✓ Donated $${d.amount.toFixed(2)} to ${d.campaignId}!`, 'success');
+            dForm.reset();
+            loadHistory(getUser());  // auto-refresh after donate
+        } catch (err) {
+            showMsg(dMsg, err.message, 'error');
+        }
+    });
+
+
+    async function loadHistory(userId) {
+        histEl.innerHTML = '';
+        clearMsg(dMsg);
+        try {
+            const resp = await fetch(`${API}?userId=${encodeURIComponent(userId)}`);
+            if (!resp.ok) throw new Error('Could not load history');
+            const list = await resp.json();
+            if (!list.length) {
+                histEl.innerHTML = '<li>No donations yet.</li>';
+                return;
+            }
+            for (const d of list) {
+                const li = document.createElement('li');
+                li.textContent = `#${d.id.slice(0,8)} — $${d.amount.toFixed(2)}`;
+                if (!d.canceled) {
+                    const btn = document.createElement('button');
+                    btn.textContent = 'Cancel';
+                    btn.addEventListener('click', () => cancelDonation(d.id, userId));
+                    li.append(' ', btn);
+                } else {
+                    li.append(' (canceled)');
+                }
+                histEl.appendChild(li);
+            }
+        } catch (err) {
+            showMsg(dMsg, err.message, 'error');
+        }
+    }
+
+
+    async function cancelDonation(id, userId) {
+        clearMsg(dMsg);
+        try {
+            const resp = await fetch(`${API}/${id}`, { method: 'DELETE' });
+            if (!resp.ok) throw new Error('Cancel failed');
+            showMsg(dMsg, '↺ Donation canceled.', 'success');
+            loadHistory(userId);
+        } catch (err) {
+            showMsg(dMsg, err.message, 'error');
+        }
+    }
+
+
+    // — Comment section —
+    const cForm  = document.getElementById('comment-form');
+    const cMsg   = document.getElementById('comment-msg');
+    const comEl  = document.getElementById('comments');
+
+
+    document.getElementById('refresh-comments')
+        .addEventListener('click', () => {
+            const camp = document.getElementById('cCampaignId').value.trim();
+            if (camp) loadComments(camp);
+        });
+
+
+    cForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        clearMsg(cMsg);
+        const camp = document.getElementById('cCampaignId').value.trim();
+        try {
+            const resp = await fetch(`${API}/${encodeURIComponent(camp)}/comments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: document.getElementById('cUserId').value.trim(),
+                    text:   document.getElementById('commentText').value.trim()
+                })
+            });
+            if (!resp.ok) throw new Error(await resp.text());
+            showMsg(cMsg, '✓ Comment posted!', 'success');
+            cForm.reset();
+            loadComments(camp);
+        } catch (err) {
+            showMsg(cMsg, err.message, 'error');
+        }
+    });
+
+
+    async function loadComments(camp) {
+        comEl.innerHTML = '';
+        clearMsg(cMsg);
+        try {
+            const resp = await fetch(`${API}/${encodeURIComponent(camp)}/comments`);
+            if (!resp.ok) throw new Error('Could not load comments');
+            const list = await resp.json();
+            if (!list.length) {
+                comEl.innerHTML = '<li>No comments yet.</li>';
+                return;
+            }
+            for (const c of list) {
+                const li = document.createElement('li');
+                li.textContent = `${c.userId}: ${c.text}` +
+                    (c.timestamp
+                        ? ` (${new Date(c.timestamp).toLocaleString()})`
+                        : '');
+                comEl.appendChild(li);
+            }
+        } catch (err) {
+            showMsg(cMsg, err.message, 'error');
+        }
+    }
+
+
+    function getUser()      { return document.getElementById('userId').value.trim(); }
+    function showMsg(el,t,c){ el.textContent = t; el.className = c; }
+    function clearMsg(el)   { el.textContent = ''; el.className = ''; }
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const u     = getUser();
+        const cCamp = document.getElementById('cCampaignId').value.trim();
+        if (u)     loadHistory(u);
+        if (cCamp) loadComments(cCamp);
+    });
+</script>
+</body>
+</html>

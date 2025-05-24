@@ -1,4 +1,5 @@
-package k6.gatherlove.donation.comment.controller;
+package k6.gatherlove.donation.controller;
+
 
 import java.util.List;
 
@@ -6,9 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import k6.gatherlove.donation.comment.dto.CommentRequest;
-import k6.gatherlove.donation.comment.model.Comment;
-import k6.gatherlove.donation.comment.service.CommentService;
+
+import k6.gatherlove.donation.dto.CommentRequest;
+import k6.gatherlove.donation.model.Comment;
+import k6.gatherlove.donation.service.CommentService;
+
 
 @RestController
 @RequestMapping("/donations/{campaignId}/comments")

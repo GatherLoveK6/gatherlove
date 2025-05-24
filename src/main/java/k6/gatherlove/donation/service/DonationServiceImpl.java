@@ -3,6 +3,7 @@ package k6.gatherlove.donation.service;
 import k6.gatherlove.donation.model.Donation;
 import k6.gatherlove.donation.repository.DonationRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -10,54 +11,63 @@ import java.util.List;
 public class DonationServiceImpl implements DonationService {
     public static final double INITIAL_USER_BALANCE = 100.0;
     private double userBalance = INITIAL_USER_BALANCE;
-    private final DonationRepository donationRepository;
 
-    public DonationServiceImpl(DonationRepository donationRepository) {
-        this.donationRepository = donationRepository;
+
+    private final DonationRepository repo;
+
+
+    public DonationServiceImpl(DonationRepository repo) {
+        this.repo = repo;
     }
 
     @Override
+    @Transactional
     public Donation createDonation(String userId, double amount, String campaignId) {
-        checkFunds(amount);
+        if (amount > userBalance) {
+            throw new IllegalStateException("Insufficient balance to create donation!");
+        }
         userBalance -= amount;
         Donation donation = new Donation(userId, amount, campaignId);
         donation.setConfirmed(true);
-        donationRepository.save(donation);
-        return donation;
+
+
+        return repo.save(donation);
     }
 
     @Override
+    @Transactional
     public void cancelDonation(String donationId) {
-        Donation d = donationRepository.findById(donationId);
-        if (d == null) throw new IllegalArgumentException("Donation does not exist!");
-        if (d.isCanceled()) return;
-        d.setCanceled(true);
-        userBalance += d.getAmount();
+        Donation donation = repo.findById(donationId)
+                .orElseThrow(() -> new IllegalArgumentException("Donation does not exist!"));
+
+
+        if (!donation.isCanceled()) {
+            donation.setCanceled(true);
+            repo.save(donation);
+            userBalance += donation.getAmount();
+        }
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Donation findDonationById(String donationId) {
-        return donationRepository.findById(donationId);
+        return repo.findById(donationId).orElse(null);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Donation> listAllDonations() {
-        return donationRepository.findAll();
+        return repo.findAll();
     }
 
     @Override
-    public List<Donation> listDonationsByUser(String userId) {   // ← new
-        return donationRepository.findByUserId(userId);
+    @Transactional(readOnly = true)
+    public List<Donation> listDonationsByUser(String userId) {
+        return repo.findByUserId(userId);
     }
 
     @Override
     public double getUserBalance() {
         return userBalance;
-    }
-
-    private void checkFunds(double amount) {
-        if (amount > userBalance) {
-            throw new IllegalStateException("Insufficient balance to create donation!");
-        }
     }
 }
