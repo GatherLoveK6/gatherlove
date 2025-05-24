@@ -17,6 +17,8 @@
     .campaign-actions button { margin-right: 10px; }
     .progress-bar { background: #eee; border-radius: 4px; overflow: hidden; margin: 8px 0; }
     .progress-bar-inner { background: #2a5885; height: 16px; color: #fff; text-align: center; font-size: 12px; }
+    .proof-image { max-width: 200px; max-height: 200px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; }
+    .proof-section { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; }
   </style>
 </head>
 <body>
@@ -134,6 +136,12 @@
             <div>Goal: ${c.goalAmount} | Raised: ${c.currentAmount || 0}</div>
             <div>Deadline: ${c.deadline}</div>
             <div>${c.description}</div>
+            ${c.proofFilePath ? `
+              <div class="proof-section">
+                <div><strong>Proof of Fund Usage:</strong></div>
+                <img src="/api/fundraising/files/${c.proofFilePath}" alt="Proof of fund usage" class="proof-image" onerror="this.style.display='none'">
+              </div>
+            ` : ''}
             <div class="campaign-actions"></div>
           `;
           // Actions: Update, Delete, Upload Proof (if allowed)
@@ -203,6 +211,12 @@
             <div class="progress-bar"><div class="progress-bar-inner" style="width:${percent}%">${percent}%</div></div>
             <div>Deadline: ${c.deadline}</div>
             <div>${c.description}</div>
+            ${c.proofFilePath ? `
+              <div class="proof-section">
+                <div><strong>Proof of Fund Usage:</strong></div>
+                <img src="/api/fundraising/files/${c.proofFilePath}" alt="Proof of fund usage" class="proof-image" onerror="this.style.display='none'">
+              </div>
+            ` : ''}
             <div class="campaign-actions"></div>
           `;
           // Actions: Donate, Report
