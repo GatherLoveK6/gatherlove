@@ -9,13 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
-
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -88,5 +85,40 @@ public class ArticleManagementControllerTest {
     void testDeleteArticle() throws Exception {
         mockMvc.perform(delete("/articles/" + article.getId()))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser
+    void testLikeArticle() throws Exception {
+        mockMvc.perform(post("/articles/" + article.getId() + "/like"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.likes").value(1));
+    }
+
+    @Test
+    @WithMockUser
+    void testAddComment() throws Exception {
+        mockMvc.perform(post("/articles/" + article.getId() + "/comments")
+                        .param("username", "testuser")
+                        .param("content", "Great article!"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("testuser"))
+                .andExpect(jsonPath("$.content").value("Great article!"));
+    }
+
+    @Test
+    @WithMockUser
+    void testGetComments() throws Exception {
+
+        mockMvc.perform(post("/articles/" + article.getId() + "/comments")
+                .param("username", "testuser")
+                .param("content", "Great article!"));
+
+
+        mockMvc.perform(get("/articles/" + article.getId() + "/comments"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].username").value("testuser"))
+                .andExpect(jsonPath("$[0].content").value("Great article!"));
     }
 }
