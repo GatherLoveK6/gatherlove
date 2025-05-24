@@ -9,6 +9,7 @@ import k6.gatherlove.fundraising.model.CampaignStatus;
 import k6.gatherlove.fundraising.repository.CampaignRepository;
 import k6.gatherlove.fundraising.validator.CampaignValidator;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,9 +20,11 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CampaignServiceImpl implements CampaignService {
     
     private final CampaignRepository campaignRepository;
+    private final FileStorageService fileStorageService;
     
     @Override
     public Campaign createCampaign(CampaignCreationRequest request, Long userId) {
@@ -72,8 +75,18 @@ public class CampaignServiceImpl implements CampaignService {
         if (!campaign.getUserId().equals(userId) || campaign.getStatus() != CampaignStatus.ACTIVE) {
             throw new ValidationException("You can only upload proof for your active campaigns");
         }
-        // Hardcode file path for now
-        campaign.setProofFilePath("proofs/" + file.getOriginalFilename());
+        
+        // Validate file type (optional - add image validation)
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new ValidationException("Only image files are allowed");
+        }
+        
+        // Store the file using FileStorageService
+        String filePath = fileStorageService.storeFile(file, "proofs");
+        campaign.setProofFilePath(filePath);
+        
+        log.info("Proof uploaded for campaign {}: {}", id, filePath);
         campaignRepository.save(campaign);
     }
 
