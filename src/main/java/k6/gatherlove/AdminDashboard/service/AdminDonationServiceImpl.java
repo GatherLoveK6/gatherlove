@@ -15,6 +15,13 @@ public class AdminDonationServiceImpl implements AdminDonationService {
 
     private final DonationRepository donationRepository;
 
+    private List<DonationHistoryResponse> mockDonations = null;
+
+    @SuppressWarnings("unused")
+    public void setMockDonations(List<DonationHistoryResponse> mockDonations) {
+        this.mockDonations = mockDonations;
+    }
+
     @Override
     public List<DonationHistoryResponse> getDonationHistoryByCampaignId(String campaignId) {
         return donationRepository.findByCampaignId(campaignId).stream()
@@ -27,6 +34,9 @@ public class AdminDonationServiceImpl implements AdminDonationService {
 
     @Override
     public List<DonationHistoryResponse> getAllDonations() {
+        if (mockDonations != null) {
+            return mockDonations;
+        }
         return generateMockDonations();
     }
 
@@ -36,5 +46,4 @@ public class AdminDonationServiceImpl implements AdminDonationService {
                 new DonationHistoryResponse("John", 75000)
         );
     }
-
 }
