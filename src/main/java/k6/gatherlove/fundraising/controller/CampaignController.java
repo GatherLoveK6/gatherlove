@@ -12,9 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -36,10 +36,11 @@ public class CampaignController {
     private final CampaignService campaignService;
     private final FileStorageService fileStorageService;
     
-    // Updated to handle both numeric and UUID-style user IDs
+    // Updated to handle authentication more robustly
     private Long getAuthenticatedUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
+        if (authentication == null || !authentication.isAuthenticated() || 
+            "anonymousUser".equals(authentication.getPrincipal())) {
             throw new ValidationException("User not authenticated");
         }
         
@@ -53,8 +54,17 @@ public class CampaignController {
             // If not a direct number, it might be a UUID or complex ID
             // Generate a consistent numeric hash for this session
             // This is a workaround - in production you'd want proper ID mapping
-            return (long) Math.abs(userId.hashCode());
+            long hashedId = (long) Math.abs(userId.hashCode());
+            log.debug("Converted user ID {} to numeric ID {}", userId, hashedId);
+            return hashedId;
         }
+    }
+    
+    // Helper method to check if user is authenticated without throwing exception
+    private boolean isUserAuthenticated() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.isAuthenticated() && 
+               !"anonymousUser".equals(authentication.getPrincipal());
     }
     
     @PostMapping("/campaigns")
@@ -66,14 +76,7 @@ public class CampaignController {
             Campaign createdCampaign = campaignService.createCampaign(request, userId);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdCampaign);
         } catch (ValidationException e) {
-            Long userId = null;
-            try {
-                userId = getAuthenticatedUserId();
-            } catch (Exception ex) {
-                // Ignore if we can't get the user ID
-            }
-            
-            log.error("Validation error creating campaign for user {}: {}", userId, e.getMessage());
+            log.error("Validation error creating campaign: {}", e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
@@ -81,8 +84,14 @@ public class CampaignController {
     }
     
     @GetMapping("/campaigns/my-campaigns")
-    public ResponseEntity<List<Campaign>> getUserCampaigns() {
+    public ResponseEntity<?> getUserCampaigns() {
         try {
+            if (!isUserAuthenticated()) {
+                log.warn("Unauthenticated user attempted to access my-campaigns");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Please log in to view your campaigns"));
+            }
+            
             Long userId = getAuthenticatedUserId();
             log.info("Fetching campaigns for user: {}", userId);
             
@@ -90,7 +99,8 @@ public class CampaignController {
             return ResponseEntity.ok(userCampaigns);
         } catch (Exception e) {
             log.error("Error fetching user campaigns", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(List.of());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", "Error fetching campaigns: " + e.getMessage()));
         }
     }
     
@@ -100,13 +110,21 @@ public class CampaignController {
                 .map(campaign -> {
                     // Only return the campaign if it's ACTIVE or belongs to the current user
                     try {
-                        Long userId = getAuthenticatedUserId();
-                        if (campaign.getUserId().equals(userId) || 
-                            campaign.getStatus() == CampaignStatus.ACTIVE) {
-                            return ResponseEntity.ok(campaign);
+                        if (isUserAuthenticated()) {
+                            Long userId = getAuthenticatedUserId();
+                            if (campaign.getUserId().equals(userId) || 
+                                campaign.getStatus() == CampaignStatus.ACTIVE) {
+                                return ResponseEntity.ok(campaign);
+                            }
+                        } else {
+                            // For unauthenticated users, only show ACTIVE campaigns
+                            if (campaign.getStatus() == CampaignStatus.ACTIVE) {
+                                return ResponseEntity.ok(campaign);
+                            }
                         }
                     } catch (Exception e) {
-                        // For unauthenticated users, only show ACTIVE campaigns
+                        log.error("Error checking campaign access", e);
+                        // Fallback: show ACTIVE campaigns to everyone
                         if (campaign.getStatus() == CampaignStatus.ACTIVE) {
                             return ResponseEntity.ok(campaign);
                         }
@@ -167,7 +185,7 @@ public class CampaignController {
             
             if (resource.exists() && resource.isReadable()) {
                 return ResponseEntity.ok()
-                    .contentType(MediaType.IMAGE_JPEG) 
+                    .contentType(MediaType.IMAGE_JPEG) // You might want to detect the actual content type
                     .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
                     .body(resource);
             } else {
@@ -194,9 +212,16 @@ public class CampaignController {
     }
 
     @GetMapping("/campaigns/active")
-    public ResponseEntity<List<Campaign>> getActiveCampaigns() {
-        log.info("Fetching active campaigns");
-        return ResponseEntity.ok(campaignService.getActiveCampaigns());
+    public ResponseEntity<?> getActiveCampaigns() {
+        try {
+            log.info("Fetching active campaigns");
+            List<Campaign> activeCampaigns = campaignService.getActiveCampaigns();
+            return ResponseEntity.ok(activeCampaigns);
+        } catch (Exception e) {
+            log.error("Error fetching active campaigns", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", "Error fetching active campaigns: " + e.getMessage()));
+        }
     }
 
     @GetMapping("/campaigns/all")
