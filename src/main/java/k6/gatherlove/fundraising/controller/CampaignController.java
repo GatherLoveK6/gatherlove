@@ -6,16 +6,22 @@ import k6.gatherlove.fundraising.exception.ValidationException;
 import k6.gatherlove.fundraising.model.Campaign;
 import k6.gatherlove.fundraising.model.CampaignStatus;
 import k6.gatherlove.fundraising.service.CampaignService;
+import k6.gatherlove.fundraising.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +34,7 @@ import java.util.stream.Collectors;
 public class CampaignController {
     
     private final CampaignService campaignService;
+    private final FileStorageService fileStorageService;
     
     // Updated to handle both numeric and UUID-style user IDs
     private Long getAuthenticatedUserId() {
@@ -144,9 +151,31 @@ public class CampaignController {
             log.info("Uploading proof for campaign {} by user: {}", id, userId);
             
             campaignService.uploadProofOfFundUsage(id, userId, file);
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok(Map.of("message", "Proof uploaded successfully"));
         } catch (ValidationException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/files/{subDirectory}/{filename:.+}")
+    public ResponseEntity<Resource> serveFile(@PathVariable String subDirectory, 
+                                            @PathVariable String filename) {
+        try {
+            String relativePath = subDirectory + "/" + filename;
+            Path filePath = fileStorageService.getFilePath(relativePath);
+            Resource resource = new UrlResource(filePath.toUri());
+            
+            if (resource.exists() && resource.isReadable()) {
+                return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_JPEG) 
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                    .body(resource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            log.error("Error serving file: {}/{}", subDirectory, filename, e);
+            return ResponseEntity.notFound().build();
         }
     }
 
