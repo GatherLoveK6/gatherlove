@@ -7,14 +7,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/admin/statistics")
+@RequestMapping("/admin")
 @RequiredArgsConstructor
 public class AdminStatisticsController {
 
     private final AdminStatisticsService adminStatisticsService;
 
-    @GetMapping
-    public ResponseEntity<AdminStatisticsResponse> getStatistics() {
-        return ResponseEntity.ok(adminStatisticsService.getPlatformStatistics());
+    @GetMapping("/stats")
+    public ResponseEntity<AdminStatisticsResponse> getStats() {
+        AdminStatisticsResponse stats = adminStatisticsService.getPlatformStatistics();
+        return ResponseEntity.ok(stats);
     }
 }
+

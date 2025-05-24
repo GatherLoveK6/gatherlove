@@ -77,7 +77,20 @@
 <div class="dashboard-section">
     <h2>Platform Statistics</h2>
     <button onclick="loadStatistics()">View Statistics</button>
-    <div id="stats-output"></div>
+    <div class="stats-container">
+        <div class="stat-card">
+            <h4>Total Campaigns</h4>
+            <p id="totalCampaigns">--</p>
+        </div>
+        <div class="stat-card">
+            <h4>Total Donations</h4>
+            <p id="totalDonations">--</p>
+        </div>
+        <div class="stat-card">
+            <h4>Total Users</h4>
+            <p id="totalUsers">--</p>
+        </div>
+    </div>
 </div>
 
 <div class="dashboard-section">
@@ -126,22 +139,20 @@
 
 <script>
     async function loadStatistics() {
-        const output = document.getElementById("stats-output");
-        output.innerHTML = "Loading...";
         try {
             const res = await fetch("/admin/stats");
             if (!res.ok) throw new Error("Failed to fetch stats");
             const stats = await res.json();
-            output.innerHTML = `
-        <p>Total Campaigns: ${stats.totalCampaigns}</p>
-        <p>Total Donations: ${stats.totalDonations}</p>
-        <p>Number of Users: ${stats.totalUsers}</p>
-      `;
+
+            document.getElementById("totalCampaigns").textContent = stats.totalCampaigns;
+            document.getElementById("totalDonations").textContent = stats.totalDonations;
+            document.getElementById("totalUsers").textContent = stats.totalUsers;
         } catch (err) {
-            output.innerHTML = "Error loading statistics.";
+            alert("Failed to load statistics");
             console.error(err);
         }
     }
+
 
     async function createAnnouncement() {
         const title = document.getElementById("announcementTitle").value.trim();
@@ -226,8 +237,10 @@
         try {
             const res = await fetch(`/admin/campaigns/${campaignId}/status`, {
                 method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: newStatus })
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ status: newStatus }),
             });
             if (res.ok) {
                 alert(`Campaign ${campaignId} updated to ${newStatus}`);
@@ -258,7 +271,6 @@
                 div.innerHTML = `
           <strong>Donor:</strong> ${d.donorName || "Anonymous"}<br>
           <strong>Amount:</strong> ${d.amount}<br>
-          <strong>Date:</strong> ${d.date}<br><hr>
         `;
                 output.appendChild(div);
             });

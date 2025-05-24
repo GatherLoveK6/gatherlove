@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class AdminDonationServiceImplTest {
 
-    private final AdminDonationServiceImpl service = new AdminDonationServiceImpl();
+    private final AdminDonationServiceImpl service = new AdminDonationServiceImpl(null); // null for donationRepository since we're testing mock
 
     @Test
     void testGetAllDonations() {
@@ -18,7 +18,9 @@ class AdminDonationServiceImplTest {
         assertNotNull(donations);
         assertFalse(donations.isEmpty());
         assertEquals(2, donations.size());
-        assertEquals("Jane", donations.get(0).getDonorName());
-        assertEquals("John", donations.get(1).getDonorName());
+        assertEquals("Jane", donations.get(0).getUserId());
+        assertEquals(50000, donations.get(0).getAmount());
+        assertEquals("John", donations.get(1).getUserId());
+        assertEquals(75000, donations.get(1).getAmount());
     }
 }

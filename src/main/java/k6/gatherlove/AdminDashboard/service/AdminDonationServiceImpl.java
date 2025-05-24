@@ -1,12 +1,29 @@
 package k6.gatherlove.AdminDashboard.service;
 
 import k6.gatherlove.AdminDashboard.dto.DonationHistoryResponse;
+import k6.gatherlove.donation.model.Donation;
+import k6.gatherlove.donation.repository.DonationRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class AdminDonationServiceImpl implements AdminDonationService {
+
+    private final DonationRepository donationRepository;
+
+    @Override
+    public List<DonationHistoryResponse> getDonationHistoryByCampaignId(String campaignId) {
+        return donationRepository.findByCampaignId(campaignId).stream()
+                .map((Donation d) -> new DonationHistoryResponse(
+                        d.getUserId(),
+                        d.getAmount()
+                ))
+                .collect(Collectors.toList());
+    }
 
     @Override
     public List<DonationHistoryResponse> getAllDonations() {
@@ -15,12 +32,9 @@ public class AdminDonationServiceImpl implements AdminDonationService {
 
     private List<DonationHistoryResponse> generateMockDonations() {
         return List.of(
-                new DonationHistoryResponse(
-                        1L, "Jane", "School Funds", 50000, "2025-04-10T13:45:00"
-                ),
-                new DonationHistoryResponse(
-                        2L, "John", "Orphanage Donation", 75000, "2025-04-11T09:20:00"
-                )
+                new DonationHistoryResponse("Jane", 50000),
+                new DonationHistoryResponse("John", 75000)
         );
     }
+
 }

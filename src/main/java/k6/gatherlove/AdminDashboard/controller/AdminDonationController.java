@@ -15,8 +15,8 @@ public class AdminDonationController {
 
     private final AdminDonationService adminDonationService;
 
-    @GetMapping
-    public ResponseEntity<List<DonationHistoryResponse>> getAllDonations() {
-        return ResponseEntity.ok(adminDonationService.getAllDonations());
+    @GetMapping("/history")
+    public ResponseEntity<List<DonationHistoryResponse>> getDonationHistory(@RequestParam String campaignId) {
+        return ResponseEntity.ok(adminDonationService.getDonationHistoryByCampaignId(campaignId));
     }
 }
