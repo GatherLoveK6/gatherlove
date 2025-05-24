@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;    // <<— add this
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -12,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@WithMockUser
 class CommentControllerTest {
 
     @Autowired private MockMvc mvc;
@@ -25,11 +27,10 @@ class CommentControllerTest {
            }
            """;
 
-
         mvc.perform(post("/donations/campA/comments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
-                .andExpect(status().isCreated())             // expecting 201 Created
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.campaignId").value("campA"))
                 .andExpect(jsonPath("$.userId").value("user1"))
                 .andExpect(jsonPath("$.text").value("Great job!"));
@@ -48,7 +49,6 @@ class CommentControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isCreated());
-
 
         // fetch
         mvc.perform(get("/donations/campB/comments"))
