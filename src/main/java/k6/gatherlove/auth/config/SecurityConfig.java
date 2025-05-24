@@ -8,8 +8,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.*;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.*;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
 @Configuration
 @EnableWebSecurity
@@ -21,33 +21,22 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(sm -> sm
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
-
-                        .requestMatchers(
-                                "/auth/**",
-                                "/assets/**",
-                                "/", "/index.html",
-                                "/create-payment-method.html",
-                                "/update-payment-method.html",
-                                "/delete-payment-method.html",
-                                "/topup.html",
-                                "/withdraw.html",
-                                "/transactions.html",
-                                "/favicon.ico"
-                        ).permitAll()
-
-                        .requestMatchers("/api/**").authenticated()
-
-                        .anyRequest().permitAll()
+                        // allow login & register (and your static assets folder):
+                        .requestMatchers("/auth/**", "/assets/**").permitAll()
+                        // admin‐only dashboard:
+                        .requestMatchers("/admin-dashboard.html").hasRole("ADMIN")
+                        // everything else (including fundraising.html, donation.html, etc):
+                        .anyRequest().authenticated()
                 )
-
+                // redirect to our custom login page instead of returning 401
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+                        .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/auth/login"))
                 )
-
+                // apply our JWT check before Spring’s username/password filter
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

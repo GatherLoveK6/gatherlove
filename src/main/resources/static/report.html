@@ -97,6 +97,8 @@
   </style>
 </head>
 <body>
+<div id="navbar-placeholder"></div>
+
   <h1>GatherLove Report Manager</h1>
 
   <!-- Create Report -->
@@ -149,6 +151,11 @@
   </div>
 
   <script>
+    fetch('/navbar.html')
+            .then(response => response.text())
+            .then(data => {
+              document.getElementById('navbar-placeholder').innerHTML = data;
+            });
     const campaignIdToTitle = {};
 
     async function loadCampaigns() {

@@ -100,6 +100,8 @@
   </style>
 </head>
 <body>
+<div id="navbar-placeholder"></div>
+
 <header>
   <h1 id="title">User's Wallet</h1>
   <input id="headerUser" placeholder="User ID" />
@@ -130,6 +132,11 @@
 </div>
 
 <script>
+  fetch('/navbar.html')
+          .then(response => response.text())
+          .then(data => {
+            document.getElementById('navbar-placeholder').innerHTML = data;
+          });
   const headerUser = document.getElementById('headerUser');
   const titleEl    = document.getElementById('title');
 

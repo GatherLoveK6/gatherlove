@@ -76,6 +76,7 @@
     </style>
 </head>
 <body>
+<div id="navbar-placeholder"></div>
 <h1>GatherLove Article Management</h1>
 
 <div class="section">
@@ -113,6 +114,11 @@
 </div>
 
 <script>
+    fetch('/navbar.html')
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('navbar-placeholder').innerHTML = data;
+        });
     document.getElementById("createForm").addEventListener("submit", async function (e) {
         e.preventDefault();
         const payload = {

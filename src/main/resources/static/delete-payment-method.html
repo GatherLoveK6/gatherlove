@@ -55,7 +55,7 @@
   </style>
 </head>
 <body>
-
+<div id="navbar-placeholder"></div>
 <div class="container">
   <div class="card">
     <div class="form-group">
@@ -72,6 +72,11 @@
 
 <script>
   // ambil user dari query string
+  fetch('/navbar.html')
+          .then(response => response.text())
+          .then(data => {
+            document.getElementById('navbar-placeholder').innerHTML = data;
+          });
   const params = new URLSearchParams(location.search);
   const user = params.get('user') || '';
   document.getElementById('userId').value = user;

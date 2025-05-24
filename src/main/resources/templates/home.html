@@ -1,0 +1,151 @@
+<!-- src/main/resources/templates/hello.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>GatherLove Home</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: sans-serif;
+            background: #f0f4f8;
+            color: #333;
+        }
+
+        /* ─── Navbar ────────────────────────────────────────────────────────── */
+        nav.navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fff;
+            padding: 0.75rem 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .navbar-brand {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+        .navbar-menu {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            gap: 1rem;
+        }
+        .navbar-menu li a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 600;
+        }
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .navbar-user span {
+            font-weight: 600;
+        }
+        .btn-logout {
+            padding: 0.4rem 0.75rem;
+            background: #dc3545;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 0.25rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .btn-logout:hover {
+            background: #c82333;
+        }
+
+        /* ─── Page Card ────────────────────────────────────────────────────────── */
+        .home-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 60px); /* account for navbar height */
+            padding: 1rem;
+        }
+        .home-card {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .home-card h2 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        .home-card p {
+            margin: 0.75rem 0;
+            font-size: 1rem;
+        }
+        .btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            margin-top: 1rem;
+            background: #28a745;
+            border: none;
+            border-radius: 0.25rem;
+            font-size: 1rem;
+            color: #fff;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .btn:hover { background: #218838; }
+    </style>
+</head>
+<body>
+<!-- Navbar -->
+<nav class="navbar">
+    <div class="navbar-brand">GatherLove</div>
+    <ul class="navbar-menu">
+        <li><a th:href="@{/home}">Home</a></li>
+
+        <li><a th:href="@{/fundraising.html}">Fundraising</a></li>
+        <li><a th:href="@{/articles.html}">Article</a></li>
+        <li><a th:href="@{/donation.html}">Donation</a></li>
+        <li><a th:href="@{/report.html}">Report</a></li>
+        <li><a th:href="@{/index.html}">Wallet</a></li>
+        <li>
+            <a
+                    th:href="'https://www.linkedin.com/in/kevinadriano1512/?originalSubdomain=id'"
+                    target="_blank"
+                    rel="noopener noreferrer"
+            >
+                Kevin
+            </a>
+        </li>
+
+        <li th:if="${isAdmin}">
+            <a th:href="@{/admin-dashboard.html}">Admin Dashboard</a>
+        </li>
+
+
+
+        <!-- add more nav links here as needed -->
+    </ul>
+    <div class="navbar-user">
+        <span th:text="${username}">User</span>
+        <a th:href="@{/auth/logout}" class="btn-logout">Log Out</a>
+    </div>
+</nav>
+
+<!-- Main content card -->
+<div class="home-container">
+    <div class="home-card">
+        <h2>Hello, <span th:text="${username}">User</span>!</h2>
+        <p>
+            You are in
+            <strong th:text="${isAdmin} ? 'ADMIN' : 'USER'">USER</strong>
+            mode.
+        </p>
+    </div>
+</div>
+</body>
+</html>

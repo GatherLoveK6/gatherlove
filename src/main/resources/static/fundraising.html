@@ -22,6 +22,8 @@
   </style>
 </head>
 <body>
+<div id="navbar-placeholder"></div>
+
   <h1>GatherLove Fundraising</h1>
 
   <!-- Create Campaign -->
@@ -50,6 +52,11 @@
   </div>
 
   <script>
+    fetch('/navbar.html')
+            .then(response => response.text())
+            .then(data => {
+              document.getElementById('navbar-placeholder').innerHTML = data;
+            });
     // Add error handling and debugging
     async function fetchWithErrorHandling(url, options = {}) {
         try {

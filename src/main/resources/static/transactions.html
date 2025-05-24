@@ -38,6 +38,8 @@
     </style>
 </head>
 <body>
+<div id="navbar-placeholder"></div>
+
 <div class="card">
     <h3>Transaction History</h3>
     <ul id="historyList">
@@ -47,6 +49,12 @@
 </div>
 
 <script>
+
+    fetch('/navbar.html')
+        .then(response => response.text())
+        .then(data => {
+        document.getElementById('navbar-placeholder').innerHTML = data;
+    });
     const p = new URLSearchParams(location.search);
     const user = p.get('user') || '';
     const ul = document.getElementById('historyList');

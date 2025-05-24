@@ -49,7 +49,7 @@ public class AuthController {
                     .build();
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
             redirectAttrs.addFlashAttribute("message", "Login successful!");
-            return "redirect:/hello";
+            return "redirect:/home";
         } catch (RuntimeException ex) {
             redirectAttrs.addFlashAttribute("error", ex.getMessage());
             return "redirect:/auth/login";
