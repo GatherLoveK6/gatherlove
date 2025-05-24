@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>User's Wallet</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0 }
     body {
       background: #f0eff5;
       font-family: 'Segoe UI', sans-serif;
@@ -22,17 +22,14 @@
       justify-content: space-between;
       border-radius: 0 0 16px 16px;
     }
-    header h1 {
-      font-size: 24px;
-      flex: 1;
-    }
+    header h1 { font-size: 24px; flex: 1 }
     header input {
       padding: 6px 8px;
       border-radius: 6px;
       border: none;
       font-size: 14px;
       margin-right: 12px;
-      width: 120px;
+      width: 140px;
     }
     header button {
       background: #472a88;
@@ -44,7 +41,7 @@
       font-size: 14px;
       transition: background 0.3s;
     }
-    header button:hover { background: #3e236f; }
+    header button:hover { background: #3e236f }
 
     .container {
       display: flex;
@@ -76,14 +73,18 @@
       margin-bottom: 12px;
       color: #5a3cb3;
     }
-    .card .balance {
+    .balance {
       font-size: 32px;
       font-weight: bold;
-      margin: 8px 0;
+      margin-bottom: 16px;
     }
-    .card .actions {
+    .actions {
       display: flex;
+      flex-wrap: wrap;
       gap: 12px;
+    }
+    .actions button {
+      flex: 1 1 140px;
     }
     button {
       background: #5a3cb3;
@@ -95,71 +96,13 @@
       font-size: 14px;
       transition: background 0.3s;
     }
-    button:hover { background: #472a88; }
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    .form-group label {
-      font-size: 14px;
-      color: #555;
-    }
-    .form-group input {
-      padding: 8px 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-    }
-    /* Modal styling */
-    #modalOverlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    #modal {
-      background: #fff;
-      border-radius: 12px;
-      width: 80%;
-      max-width: 600px;
-      max-height: 70%;
-      overflow-y: auto;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-      padding: 16px;
-    }
-    #modal h3 {
-      margin-bottom: 12px;
-      color: #5a3cb3;
-    }
-    #modal .close {
-      background: #e65b50;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      padding: 6px 12px;
-      cursor: pointer;
-      float: right;
-    }
-    #modal ul {
-      list-style: none;
-      padding-left: 0;
-    }
-    #modal ul li {
-      padding: 8px 0;
-      border-bottom: 1px solid #eee;
-    }
-    #modal ul li:last-child { border-bottom: none; }
+    button:hover { background: #472a88 }
   </style>
 </head>
 <body>
 <header>
-  <h1 id="title"></h1>
-  <input id="headerUser" placeholder="User ID">
+  <h1 id="title">User's Wallet</h1>
+  <input id="headerUser" placeholder="User ID" />
   <button onclick="getBalance()">Refresh</button>
 </header>
 
@@ -167,159 +110,94 @@
   <aside>
     <div class="card">
       <h2>Payment Methods</h2>
-      <div class="form-group">
-        <label>Create</label>
-        <input id="pmUser" placeholder="User ID">
-        <input id="pmId"   placeholder="Method ID">
-        <input id="pmType" placeholder="Type">
-        <button onclick="createPM()">Create</button>
-      </div>
-      <div class="form-group">
-        <label>List</label>
-        <input id="pmListUser" placeholder="User ID">
-        <button onclick="listPM()">List</button>
-      </div>
-      <div class="form-group">
-        <label>Update</label>
-        <input id="pmUpUser" placeholder="User ID">
-        <input id="pmUpId"   placeholder="Method ID">
-        <input id="pmUpType" placeholder="New Type">
-        <button onclick="updatePM()">Update</button>
-      </div>
-      <div class="form-group">
-        <label>Delete</label>
-        <input id="pmDelUser" placeholder="User ID">
-        <input id="pmDelId"   placeholder="Method ID">
-        <button onclick="deletePM()">Delete</button>
-      </div>
+      <button onclick="goCreatePM()">Create Payment Method</button>
     </div>
   </aside>
 
   <main>
-    <div class="card">\
+    <div class="card">
       <h2>Total Balance</h2>
       <div class="balance" id="balance">$0.00</div>
       <div class="actions">
-        <button onclick="topUp()">Top Up</button>
-        <button onclick="withdraw()">Withdraw</button>
-        <button onclick="showHistory()">Transactions</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Wallet Operations</h2>
-      <div class="form-group">
-        <label>Top Up</label>
-        <input id="wUser" placeholder="User ID">
-        <input id="wAmount" type="number" placeholder="Amount">
-        <input id="wPm" placeholder="Method ID">
-        <button onclick="topUp()">Top Up</button>
-      </div>
-      <div class="form-group">
-        <label>Withdraw</label>
-        <input id="wWdUser" placeholder="User ID">
-        <input id="wWdAmount" type="number" placeholder="Amount">
-        <button onclick="withdraw()">Withdraw</button>
-      </div>
-      <div class="form-group">
-        <label>Transaction History</label>
-        <button onclick="showHistory()">Get History</button>
+        <button onclick="goTopUp()">Top Up</button>
+        <button onclick="goWithdraw()">Withdraw</button>
+        <button onclick="goTransactions()">Transactions</button>
+        <button onclick="goUpdatePM()">Update PM</button>
+        <button onclick="goDeletePM()">Delete PM</button>
       </div>
     </div>
   </main>
 </div>
 
-<!-- Modal -->
-<div id="modalOverlay" onclick="closeModal()">
-  <div id="modal" onclick="event.stopPropagation()">
-    <button class="close" onclick="closeModal()">Close</button>
-    <h3>Transaction History</h3>
-    <ul id="historyList"></ul>
-  </div>
-</div>
-
 <script>
-  function val(id) { return document.getElementById(id).value.trim(); }
+  const headerUser = document.getElementById('headerUser');
+  const titleEl    = document.getElementById('title');
 
-  const titleEl = document.getElementById('title');
-  const headerUserInput = document.getElementById('headerUser');
-  headerUserInput.addEventListener('input', () => {
-    const name = headerUserInput.value || 'User';
-    titleEl.textContent = `${name}'s Wallet`;
+  // Prefill dari query ?user=
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('user')) headerUser.value = params.get('user');
+
+  // Sync judul ketika user ID diubah
+  headerUser.addEventListener('input', () => {
+    const u = headerUser.value.trim();
+    titleEl.textContent = u ? `${u}'s Wallet` : "User's Wallet";
   });
+  headerUser.dispatchEvent(new Event('input'));
 
+  // Redirect ke halaman create/update/delete/payment
+  function goCreatePM() {
+    const u = headerUser.value.trim();
+    if (!u) return alert('Please enter User ID');
+    location.href = `create-payment-method.html?user=${encodeURIComponent(u)}`;
+  }
+  function goUpdatePM() {
+    const u = headerUser.value.trim();
+    if (!u) return alert('Please enter User ID');
+    location.href = `update-payment-method.html?user=${encodeURIComponent(u)}`;
+  }
+  function goDeletePM() {
+    const u = headerUser.value.trim();
+    if (!u) return alert('Please enter User ID');
+    location.href = `delete-payment-method.html?user=${encodeURIComponent(u)}`;
+  }
+  function goTopUp() {
+    const u = headerUser.value.trim();
+    if (!u) return alert('Please enter User ID');
+    location.href = `topup.html?user=${encodeURIComponent(u)}`;
+  }
+  function goWithdraw() {
+    const u = headerUser.value.trim();
+    if (!u) return alert('Please enter User ID');
+    location.href = `withdraw.html?user=${encodeURIComponent(u)}`;
+  }
+  function goTransactions() {
+    const u = headerUser.value.trim();
+    if (!u) return alert('Please enter User ID');
+    location.href = `transactions.html?user=${encodeURIComponent(u)}`;
+  }
+
+  // Fetch dan tampilkan balance
   function getBalance() {
-    const u = headerUserInput.value;
+    const u = headerUser.value.trim();
     if (!u) return;
     fetch(`/users/${u}/wallet`)
             .then(r => r.json())
-            .then(js => document.getElementById('balance').textContent = `$${js.balance.toFixed(2)}`);
-  }
-
-  function createPM() {
-    fetch(`/users/${val('pmUser')}/payment-methods`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ paymentMethodId: val('pmId'), type: val('pmType') })
-    });
-  }
-
-  function listPM() {
-    fetch(`/users/${val('pmListUser')}/payment-methods`);
-  }
-
-  function updatePM() {
-    fetch(`/users/${val('pmUpUser')}/payment-methods/${val('pmUpId')}`, {
-      method: 'PUT',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ type: val('pmUpType') })
-    });
-  }
-
-  function deletePM() {
-    fetch(`/users/${val('pmDelUser')}/payment-methods/${val('pmDelId')}`, { method: 'DELETE' });
-  }
-
-  function topUp() {
-    fetch(`/users/${val('wUser')}/wallet/topup`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ amount: parseFloat(val('wAmount')), paymentMethodId: val('wPm') })
-    }).finally(getBalance);
-  }
-
-  function withdraw() {
-    fetch(`/users/${val('wWdUser')}/wallet/withdraw`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ amount: parseFloat(val('wWdAmount')) })
-    }).finally(getBalance);
-  }
-
-  function showHistory() {
-    const u = headerUserInput.value;
-    if (!u) return;
-    fetch(`/users/${u}/wallet/transactions`)
-            .then(r => r.json())
-            .then(list => {
-              const ul = document.getElementById('historyList');
-              ul.innerHTML = '';
-              list.forEach(tx => {
-                const li = document.createElement('li');
-                li.textContent = `${tx.date} | ${tx.type} | $${tx.amount.toFixed(2)}`;
-                ul.appendChild(li);
-              });
-              document.getElementById('modalOverlay').style.display = 'flex';
+            .then(js => {
+              document.getElementById('balance')
+                      .textContent = `$${js.balance.toFixed(2)}`;
+            })
+            .catch(() => {
+              document.getElementById('balance')
+                      .textContent = '$0.00';
             });
   }
 
-  function closeModal() {
-    document.getElementById('modalOverlay').style.display = 'none';
-  }
-
-  // Initialize
-  headerUserInput.value = '';
-  headerUserInput.dispatchEvent(new Event('input'));
+  // Auto-refresh balance saat page load jika sudah ada user
+  window.addEventListener('DOMContentLoaded', () => {
+    if (headerUser.value.trim()) {
+      getBalance();
+    }
+  });
 </script>
 </body>
 </html>

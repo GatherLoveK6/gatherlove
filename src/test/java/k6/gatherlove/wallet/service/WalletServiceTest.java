@@ -21,14 +21,9 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class WalletServiceTest {
 
-    @Mock
-    private WalletRepository walletRepo;
-
-    @Mock
-    private TransactionRepository transactionRepo;
-
-    @Mock
-    private PaymentMethodRepository paymentMethodRepo;
+    @Mock private WalletRepository walletRepo;
+    @Mock private TransactionRepository transactionRepo;
+    @Mock private PaymentMethodRepository paymentMethodRepo;
 
     private PaymentMethodService paymentMethodService;
     private WalletService walletService;
@@ -40,57 +35,60 @@ class WalletServiceTest {
     }
 
     @Test
-    void topUp_createsTransactionAndIncrementsBalance() {
+    void topUpAsync_createsTransactionAndIncrementsBalance() {
         String userId = "user1";
         String pmId   = "pm1";
         BigDecimal amount = BigDecimal.valueOf(100);
 
-        when(paymentMethodRepo.findById(pmId))
-                .thenReturn(Optional.of(new PaymentMethod(pmId, userId, "CREDIT_CARD")));
+        // stub validate step (composite lookup)
+        when(paymentMethodRepo.findByUserIdAndPaymentMethodId(userId, pmId))
+                .thenReturn(Optional.of(new PaymentMethod(userId, pmId, "CREDIT_CARD")));
         when(walletRepo.findByUserId(userId))
                 .thenReturn(Optional.empty());
 
-        var walletCaptor = ArgumentCaptor.forClass(Wallet.class);
+        ArgumentCaptor<Wallet> walletCaptor = ArgumentCaptor.forClass(Wallet.class);
 
-        Transaction tx = walletService.topUp(userId, amount, pmId);
+        Transaction tx = walletService
+                .topUpAsync(userId, amount, pmId)
+                .join();
 
         assertEquals("SUCCESS", tx.getStatus());
         verify(walletRepo).save(walletCaptor.capture());
         assertEquals(0,
                 walletCaptor.getValue().getBalance().compareTo(amount),
-                "Saldo harus sama dengan jumlah top-up");
+                "Balance should equal top-up amount");
         verify(transactionRepo).save(any(Transaction.class));
     }
 
     @Test
-    void withdraw_reducesBalance() {
+    void withdrawAsync_reducesBalance() {
         String userId = "user2";
-        BigDecimal initial     = BigDecimal.valueOf(200);
-        BigDecimal withdrawAmt = BigDecimal.valueOf(50);
-
         Wallet existing = new Wallet("w2", userId);
-        existing.topUp(initial);
+        existing.topUp(BigDecimal.valueOf(200));
+
         when(walletRepo.findByUserId(userId))
                 .thenReturn(Optional.of(existing));
 
-        Transaction tx = walletService.withdraw(userId, withdrawAmt);
+        Transaction tx = walletService
+                .withdrawAsync(userId, BigDecimal.valueOf(50))
+                .join();
 
         assertEquals("SUCCESS", tx.getStatus());
         assertEquals(0,
                 existing.getBalance().compareTo(BigDecimal.valueOf(150)),
-                "Saldo tersisa harus 150");
+                "Remaining balance should be 150");
         verify(transactionRepo).save(any(Transaction.class));
         verify(walletRepo).save(existing);
     }
 
     @Test
-    void withdraw_insufficientFunds_throws() {
+    void withdrawAsync_insufficientFunds_throws() {
         String userId = "user3";
         when(walletRepo.findByUserId(userId))
                 .thenReturn(Optional.of(new Wallet("w3", userId)));
 
         assertThrows(IllegalArgumentException.class,
-                () -> walletService.withdraw(userId, BigDecimal.valueOf(10)));
+                () -> walletService.withdrawAsync(userId, BigDecimal.valueOf(10)).join());
 
         verify(transactionRepo, never()).save(any());
         verify(walletRepo, never()).save(any());

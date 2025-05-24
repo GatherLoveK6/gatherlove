@@ -7,9 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/users/{userId}/payment-methods")
@@ -22,42 +24,45 @@ public class PaymentMethodController {
     }
 
     @PostMapping
-    public ResponseEntity<PaymentMethod> create(
+    public CompletableFuture<ResponseEntity<PaymentMethod>> create(
             @PathVariable String userId,
             @RequestBody PaymentMethodDto body
     ) {
-        PaymentMethod pm = svc.create(userId, body.getPaymentMethodId(), body.getType());
-
-        URI location = ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/{pmId}")
-                .buildAndExpand(pm.getPaymentMethodId())
-                .toUri();
-
-        return ResponseEntity.created(location).body(pm);
+        UriComponentsBuilder base = ServletUriComponentsBuilder.fromCurrentRequest();
+        return svc.createAsync(userId, body.getPaymentMethodId(), body.getType())
+                .thenApply(pm -> {
+                    URI location = base
+                            .path("/{pmId}")
+                            .buildAndExpand(pm.getPaymentMethodId())
+                            .toUri();
+                    return ResponseEntity.created(location).body(pm);
+                });
     }
 
     @GetMapping
-    public ResponseEntity<List<PaymentMethod>> list(@PathVariable String userId) {
-        return ResponseEntity.ok(svc.getAll(userId));
+    public CompletableFuture<ResponseEntity<List<PaymentMethod>>> list(
+            @PathVariable String userId
+    ) {
+        return svc.getAllAsync(userId)
+                .thenApply(ResponseEntity::ok);
     }
 
     @PutMapping("/{pmId}")
-    public ResponseEntity<PaymentMethod> update(
+    public CompletableFuture<ResponseEntity<PaymentMethod>> update(
             @PathVariable String userId,
             @PathVariable String pmId,
             @RequestBody PaymentMethodDto body
     ) {
-        PaymentMethod updated = svc.update(userId, pmId, body.getType());
-        return ResponseEntity.ok(updated);
+        return svc.updateAsync(userId, pmId, body.getType())
+                .thenApply(ResponseEntity::ok);
     }
 
     @DeleteMapping("/{pmId}")
-    public ResponseEntity<Void> delete(
+    public CompletableFuture<ResponseEntity<Void>> delete(
             @PathVariable String userId,
             @PathVariable String pmId
     ) {
-        svc.delete(userId, pmId);
-        return ResponseEntity.noContent().build();
+        return svc.deleteAsync(userId, pmId)
+                .thenApply(v -> ResponseEntity.noContent().build());
     }
 }

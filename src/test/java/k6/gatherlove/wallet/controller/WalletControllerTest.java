@@ -1,49 +1,65 @@
-// WalletControllerTest.java
-
 package k6.gatherlove.wallet.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import k6.gatherlove.wallet.controller.WalletController;
 import k6.gatherlove.wallet.domain.Transaction;
 import k6.gatherlove.wallet.domain.TransactionType;
 import k6.gatherlove.wallet.domain.Wallet;
+import k6.gatherlove.wallet.dto.TopUpRequest;
+import k6.gatherlove.wallet.dto.WithdrawRequest;
 import k6.gatherlove.wallet.service.WalletService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(WalletController.class)
 class WalletControllerTest {
 
-    @Autowired MockMvc mvc;
-    @MockBean WalletService svc;
-    @Autowired ObjectMapper mapper;
+    @Autowired
+    private MockMvc mvc;
+
+    @MockitoBean
+    private WalletService svc;
+
+    @Autowired
+    private ObjectMapper mapper;
 
     @Test
     void topUpShouldReturn201WithLocation() throws Exception {
-        var tx = new Transaction("tx-1","bob",TransactionType.TOP_UP,BigDecimal.valueOf(100));
+        // Arrange: stub the async service
+        Transaction tx = new Transaction("tx-1", "bob", TransactionType.TOP_UP, BigDecimal.valueOf(100));
         tx.markCompleted();
-        when(svc.topUp(eq("bob"), eq(BigDecimal.valueOf(100)), eq("pm-1"))).thenReturn(tx);
+        when(svc.topUpAsync(eq("bob"), eq(BigDecimal.valueOf(100)), eq("pm-1")))
+                .thenReturn(CompletableFuture.completedFuture(tx));
 
-        mvc.perform(post("/users/bob/wallet/topup")
+        // Prepare request body
+        TopUpRequest req = new TopUpRequest();
+        req.setAmount(BigDecimal.valueOf(100));
+        req.setPaymentMethodId("pm-1");
+        String json = mapper.writeValueAsString(req);
+
+        // Act: fire request, assert async started
+        MvcResult start = mvc.perform(post("/users/bob/wallet/topup")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                  {
-                    "amount":100,
-                    "paymentMethodId":"pm-1"
-                  }
-                  """))
+                        .content(json))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        // Dispatch and assert final response
+        mvc.perform(asyncDispatch(start))
                 .andExpect(status().isCreated())
                 .andExpect(header().string(
                         "Location",
@@ -55,15 +71,22 @@ class WalletControllerTest {
 
     @Test
     void withdrawShouldReturn201() throws Exception {
-        var tx = new Transaction("tx-2","bob",TransactionType.WITHDRAW,BigDecimal.valueOf(50));
+        Transaction tx = new Transaction("tx-2", "bob", TransactionType.WITHDRAW, BigDecimal.valueOf(50));
         tx.markCompleted();
-        when(svc.withdraw("bob", BigDecimal.valueOf(50))).thenReturn(tx);
+        when(svc.withdrawAsync("bob", BigDecimal.valueOf(50)))
+                .thenReturn(CompletableFuture.completedFuture(tx));
 
-        mvc.perform(post("/users/bob/wallet/withdraw")
+        WithdrawRequest req = new WithdrawRequest();
+        req.setAmount(BigDecimal.valueOf(50));
+        String json = mapper.writeValueAsString(req);
+
+        MvcResult start = mvc.perform(post("/users/bob/wallet/withdraw")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                  { "amount":50 }
-                  """))
+                        .content(json))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        mvc.perform(asyncDispatch(start))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.transactionId").value("tx-2"))
                 .andExpect(jsonPath("$.type").value("WITHDRAW"));
@@ -71,10 +94,15 @@ class WalletControllerTest {
 
     @Test
     void getBalanceShouldReturn200AndWallet() throws Exception {
-        var wallet = new Wallet("w-1","bob");
-        when(svc.getWallet("bob")).thenReturn(wallet);
+        Wallet w = new Wallet("w-1","bob");
+        when(svc.getWalletAsync("bob"))
+                .thenReturn(CompletableFuture.completedFuture(w));
 
-        mvc.perform(get("/users/bob/wallet"))
+        MvcResult start = mvc.perform(get("/users/bob/wallet"))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        mvc.perform(asyncDispatch(start))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value("bob"))
                 .andExpect(jsonPath("$.balance").value(0));
@@ -82,10 +110,15 @@ class WalletControllerTest {
 
     @Test
     void transactionHistoryShouldReturn200AndJsonArray() throws Exception {
-        var tx1 = new Transaction("tx-1","bob",TransactionType.TOP_UP,BigDecimal.valueOf(100));
-        when(svc.getTransactions("bob")).thenReturn(List.of(tx1));
+        Transaction tx1 = new Transaction("tx-1","bob",TransactionType.TOP_UP,BigDecimal.valueOf(100));
+        when(svc.getTransactionsAsync("bob"))
+                .thenReturn(CompletableFuture.completedFuture(List.of(tx1)));
 
-        mvc.perform(get("/users/bob/wallet/transactions"))
+        MvcResult start = mvc.perform(get("/users/bob/wallet/transactions"))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        mvc.perform(asyncDispatch(start))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].transactionId").value("tx-1"))
                 .andExpect(jsonPath("$[0].amount").value(100));

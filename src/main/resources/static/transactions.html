@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Transaction History</title>
+    <style>
+        * { box-sizing:border-box; margin:0; padding:0 }
+        body {
+            background:#f0eff5;
+            font-family:'Segoe UI',sans-serif;
+            color:#333;
+            padding:24px;
+        }
+        .card {
+            background:#fff;
+            border-radius:12px;
+            padding:24px;
+            box-shadow:0 4px 12px rgba(0,0,0,0.05);
+            max-width:600px;
+            margin:40px auto;
+        }
+        h3 { margin-bottom:16px; color:#5a3cb3; text-align:center }
+        ul { list-style:none; padding:0 }
+        li {
+            padding:8px 0;
+            border-bottom:1px solid #eee;
+            font-size:14px;
+        }
+        li:last-child { border-bottom:none }
+        button {
+            background:#5a3cb3; color:#fff; border:none;
+            border-radius:8px; padding:10px; font-size:14px;
+            cursor:pointer; margin-top:16px; width:100%;
+            transition:background .3s;
+        }
+        button:hover { background:#472a88 }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h3>Transaction History</h3>
+    <ul id="historyList">
+        <li>Loading…</li>
+    </ul>
+    <button id="btnBack">Back</button>
+</div>
+
+<script>
+    const p = new URLSearchParams(location.search);
+    const user = p.get('user') || '';
+    const ul = document.getElementById('historyList');
+    const back = document.getElementById('btnBack');
+    back.onclick = ()=>{
+        window.location.href = `index.html?user=${encodeURIComponent(user)}`;
+    };
+
+    if (!user) {
+        ul.innerHTML = '<li>Masukkan user di URL, misal ?user=alice</li>';
+    } else {
+        fetch(`/users/${user}/wallet/transactions`)
+            .then(r=>r.json())
+            .then(arr=>{
+                if (!arr.length) {
+                    ul.innerHTML = '<li>No transactions</li>';
+                } else {
+                    ul.innerHTML = '';
+                    arr.forEach(tx=>{
+                        const li = document.createElement('li');
+                        li.textContent =
+                            `${new Date(tx.transactionDate).toLocaleString()} — ${tx.type} — $${tx.amount.toFixed(2)}`;
+                        ul.appendChild(li);
+                    });
+                }
+            })
+            .catch(e=>{
+                ul.innerHTML = `<li>Error: ${e.message}</li>`;
+            });
+    }
+</script>
+</body>
+</html>

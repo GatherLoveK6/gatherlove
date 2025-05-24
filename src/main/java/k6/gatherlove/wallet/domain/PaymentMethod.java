@@ -1,58 +1,45 @@
 package k6.gatherlove.wallet.domain;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.GenericGenerator;
 
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.GenericGenerator;
 import java.util.UUID;
-import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "payment_methods")
+@Table(
+        name = "payment_methods",
+        uniqueConstraints = @UniqueConstraint(
+                columnNames = {"user_id","payment_method_id"}
+        )
+)
+@Getter @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class PaymentMethod {
+
     @Id
-    @Column(name = "payment_method_id", length = 64)
-    private String paymentMethodId;
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name="UUID", strategy="org.hibernate.id.UUIDGenerator")
+    @Column(name = "id", updatable = false, nullable = false)
+    private UUID id;                              // surrogate PK
 
     @Column(name = "user_id", nullable = false)
-    private String userId;
+    private String userId;                        // user pemilik
+
+    @Column(name = "payment_method_id", nullable = false, length = 64)
+    private String paymentMethodId;               // kode pm-1, pm-2, etc.
 
     @Column(nullable = false)
-    private String type;
+    private String type;                          // CC, GoPay, dll.
 
     @Column(nullable = false)
-    private boolean active;
+    private boolean active = true;                // default aktif
 
-    public PaymentMethod() {}
-
-    public PaymentMethod(String paymentMethodId, String userId, String type) {
-        this.paymentMethodId = paymentMethodId;
+    public PaymentMethod(String userId, String pmCode, String type) {
         this.userId = userId;
+        this.paymentMethodId = pmCode;
         this.type = type;
         this.active = true;
     }
-
-    public void activate() { this.active = true; }
-    public void deactivate() { this.active = false; }
-
-    // Getters & setters
-    public String getPaymentMethodId() { return paymentMethodId; }
-    public void setPaymentMethodId(String paymentMethodId) { this.paymentMethodId = paymentMethodId; }
-
-    public String getUserId() { return userId; }
-    public void setUserId(String userId) { this.userId = userId; }
-
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
-
-    public boolean isActive() { return active; }
-    public void setActive(boolean active) { this.active = active; }
 }

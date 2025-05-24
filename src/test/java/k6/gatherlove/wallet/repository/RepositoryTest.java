@@ -33,7 +33,6 @@ class RepositoryTest {
         // arrange
         Wallet w = new Wallet("w1", "user1");
         w.topUp(BigDecimal.valueOf(100));
-        // immediate SQL INSERT
         walletRepository.saveAndFlush(w);
 
         // act
@@ -41,45 +40,40 @@ class RepositoryTest {
 
         // assert
         assertTrue(found.isPresent());
-        assertEquals(0,
-                BigDecimal.valueOf(100).compareTo(found.get().getBalance()));
+        assertEquals(0, BigDecimal.valueOf(100)
+                .compareTo(found.get().getBalance()));
     }
 
     @Test
     @DisplayName("TransactionRepository: saveAndFlush() → findByWalletId()")
     void testTransactionRepositorySaveAndFindByWalletId() {
-        // make sure wallet row exists
         Wallet w = new Wallet("w2", "user2");
         walletRepository.saveAndFlush(w);
 
-        // arrange & flush tx
-        Transaction tx = new Transaction("tx1", "w2", TransactionType.TOP_UP, BigDecimal.valueOf(75));
+        Transaction tx = new Transaction("tx1", "w2",
+                TransactionType.TOP_UP, BigDecimal.valueOf(75));
         transactionRepository.saveAndFlush(tx);
 
-        // act
         List<Transaction> txs = transactionRepository.findByWalletId("w2");
-
-        // assert
         assertEquals(1, txs.size());
+
         Transaction saved = txs.get(0);
         assertEquals(TransactionType.TOP_UP, saved.getType());
-        assertEquals(0,
-                BigDecimal.valueOf(75).compareTo(saved.getAmount()));
+        assertEquals(0, BigDecimal.valueOf(75)
+                .compareTo(saved.getAmount()));
         assertEquals("PENDING", saved.getStatus());
     }
 
     @Test
     @DisplayName("PaymentMethodRepository: saveAndFlush() → findByUserId()")
     void testPaymentMethodRepositorySaveAndFindByUserId() {
-        // arrange & flush pm
-        PaymentMethod pm = new PaymentMethod("pm1", "user3", "CREDIT_CARD");
+        // **Note**: userId first, then paymentMethodId
+        PaymentMethod pm = new PaymentMethod("user3", "pm1", "CREDIT_CARD");
         paymentMethodRepository.saveAndFlush(pm);
 
-        // act
         List<PaymentMethod> methods = paymentMethodRepository.findByUserId("user3");
-
-        // assert
         assertEquals(1, methods.size());
+
         PaymentMethod saved = methods.get(0);
         assertEquals("pm1",         saved.getPaymentMethodId());
         assertEquals("CREDIT_CARD", saved.getType());
