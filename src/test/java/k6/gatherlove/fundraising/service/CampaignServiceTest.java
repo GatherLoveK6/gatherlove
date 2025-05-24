@@ -31,6 +31,9 @@ class CampaignServiceTest {
     @Mock
     private CampaignRepository campaignRepository;
 
+    @Mock
+    private FileStorageService fileStorageService;
+
     @InjectMocks
     private CampaignServiceImpl campaignService;
 
@@ -205,97 +208,244 @@ class CampaignServiceTest {
         campaign.setStatus(CampaignStatus.ACTIVE);
 
         when(campaignRepository.findById(1L)).thenReturn(Optional.of(campaign));
-        when(multipartFile.getOriginalFilename()).thenReturn("proof.pdf");
+        when(multipartFile.getContentType()).thenReturn("image/jpeg");
+        when(fileStorageService.storeFile(multipartFile, "proofs")).thenReturn("proofs/test-file.jpg");
 
         // Act
         campaignService.uploadProofOfFundUsage(1L, userId, multipartFile);
 
         // Assert
-        assertThat(campaign.getProofFilePath()).isEqualTo("proofs/proof.pdf");
+        assertThat(campaign.getProofFilePath()).isEqualTo("proofs/test-file.jpg");
         verify(campaignRepository, times(1)).save(campaign);
+        verify(fileStorageService, times(1)).storeFile(multipartFile, "proofs");
     }
 
     @Test
-    void shouldThrowExceptionWhenUploadProofNotAllowed() {
+    void shouldThrowExceptionWhenUploadProofWithInvalidFileType() {
         // Arrange
         Campaign campaign = new Campaign();
         campaign.setId(1L);
-        campaign.setUserId(2L); // Not the same user
+        campaign.setUserId(userId);
+        campaign.setStatus(CampaignStatus.ACTIVE);
+
+        when(campaignRepository.findById(1L)).thenReturn(Optional.of(campaign));
+        when(multipartFile.getContentType()).thenReturn("text/plain");
+
+        // Act & Assert
+        assertThrows(ValidationException.class, 
+            () -> campaignService.uploadProofOfFundUsage(1L, userId, multipartFile));
+        verify(campaignRepository, never()).save(any(Campaign.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUploadProofWithNullContentType() {
+        // Arrange
+        Campaign campaign = new Campaign();
+        campaign.setId(1L);
+        campaign.setUserId(userId);
+        campaign.setStatus(CampaignStatus.ACTIVE);
+
+        when(campaignRepository.findById(1L)).thenReturn(Optional.of(campaign));
+        when(multipartFile.getContentType()).thenReturn(null);
+
+        // Act & Assert
+        assertThrows(ValidationException.class, 
+            () -> campaignService.uploadProofOfFundUsage(1L, userId, multipartFile));
+        verify(campaignRepository, never()).save(any(Campaign.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUploadProofCampaignNotActive() {
+        // Arrange
+        Campaign campaign = new Campaign();
+        campaign.setId(1L);
+        campaign.setUserId(userId);
+        campaign.setStatus(CampaignStatus.PENDING_VERIFICATION);
+
+        when(campaignRepository.findById(1L)).thenReturn(Optional.of(campaign));
+
+        // Act & Assert
+        assertThrows(ValidationException.class, 
+            () -> campaignService.uploadProofOfFundUsage(1L, userId, multipartFile));
+        verify(campaignRepository, never()).save(any(Campaign.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenCampaignNotFoundForUpload() {
+        // Arrange
+        when(campaignRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ValidationException.class, 
+            () -> campaignService.uploadProofOfFundUsage(1L, userId, multipartFile));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenCampaignNotFoundForUpdate() {
+        // Arrange
+        when(campaignRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ValidationException.class, 
+            () -> campaignService.updateCampaign(1L, updateRequest, userId));
+        verify(campaignRepository, never()).save(any(Campaign.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUpdateCampaignNotPending() {
+        // Arrange
+        Campaign campaign = new Campaign();
+        campaign.setId(1L);
+        campaign.setUserId(userId);
         campaign.setStatus(CampaignStatus.ACTIVE);
 
         when(campaignRepository.findById(1L)).thenReturn(Optional.of(campaign));
 
         // Act & Assert
-        assertThrows(ValidationException.class, () -> campaignService.uploadProofOfFundUsage(1L, userId, multipartFile));
+        assertThrows(ValidationException.class, 
+            () -> campaignService.updateCampaign(1L, updateRequest, userId));
         verify(campaignRepository, never()).save(any(Campaign.class));
     }
 
     @Test
-    void shouldVerifyCampaignWhenPendingAndApproved() {
+    void shouldThrowExceptionWhenCampaignNotFoundForDelete() {
         // Arrange
-        Campaign campaign = new Campaign();
-        campaign.setId(1L);
-        campaign.setStatus(CampaignStatus.PENDING_VERIFICATION);
+        when(campaignRepository.findById(1L)).thenReturn(Optional.empty());
 
-        when(campaignRepository.findById(1L)).thenReturn(Optional.of(campaign));
-
-        // Act
-        campaignService.verifyCampaign(1L, true);
-
-        // Assert
-        assertThat(campaign.getStatus()).isEqualTo(CampaignStatus.ACTIVE);
-        verify(campaignRepository, times(1)).save(campaign);
+        // Act & Assert
+        assertThrows(ValidationException.class, 
+            () -> campaignService.deleteCampaign(1L, userId));
+        verify(campaignRepository, never()).delete(any(Campaign.class));
     }
 
     @Test
-    void shouldVerifyCampaignWhenPendingAndRejected() {
+    void shouldThrowExceptionWhenDeleteCampaignNotPending() {
         // Arrange
         Campaign campaign = new Campaign();
         campaign.setId(1L);
-        campaign.setStatus(CampaignStatus.PENDING_VERIFICATION);
-
-        when(campaignRepository.findById(1L)).thenReturn(Optional.of(campaign));
-
-        // Act
-        campaignService.verifyCampaign(1L, false);
-
-        // Assert
-        assertThat(campaign.getStatus()).isEqualTo(CampaignStatus.REJECTED);
-        verify(campaignRepository, times(1)).save(campaign);
-    }
-
-    @Test
-    void shouldThrowExceptionWhenVerifyCampaignNotPending() {
-        // Arrange
-        Campaign campaign = new Campaign();
-        campaign.setId(1L);
+        campaign.setUserId(userId);
         campaign.setStatus(CampaignStatus.ACTIVE);
 
         when(campaignRepository.findById(1L)).thenReturn(Optional.of(campaign));
 
         // Act & Assert
-        assertThrows(ValidationException.class, () -> campaignService.verifyCampaign(1L, true));
+        assertThrows(ValidationException.class, 
+            () -> campaignService.deleteCampaign(1L, userId));
+        verify(campaignRepository, never()).delete(any(Campaign.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenCampaignNotFoundForVerification() {
+        // Arrange
+        when(campaignRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ValidationException.class, 
+            () -> campaignService.verifyCampaign(1L, true));
         verify(campaignRepository, never()).save(any(Campaign.class));
     }
 
     @Test
-    void shouldGetActiveCampaigns() {
+    void shouldGetPendingCampaigns() {
         // Arrange
+        Campaign pendingCampaign = new Campaign();
+        pendingCampaign.setId(1L);
+        pendingCampaign.setStatus(CampaignStatus.PENDING_VERIFICATION);
+
         Campaign activeCampaign = new Campaign();
-        activeCampaign.setId(1L);
+        activeCampaign.setId(2L);
         activeCampaign.setStatus(CampaignStatus.ACTIVE);
 
-        Campaign inactiveCampaign = new Campaign();
-        inactiveCampaign.setId(2L);
-        inactiveCampaign.setStatus(CampaignStatus.PENDING_VERIFICATION);
+        when(campaignRepository.findAll()).thenReturn(List.of(pendingCampaign, activeCampaign));
 
-        when(campaignRepository.findAll()).thenReturn(List.of(activeCampaign, inactiveCampaign));
+        // Act
+        List<Campaign> result = campaignService.getPendingCampaigns();
+
+        // Assert
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getStatus()).isEqualTo(CampaignStatus.PENDING_VERIFICATION);
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenNoActiveCampaigns() {
+        // Arrange
+        Campaign pendingCampaign = new Campaign();
+        pendingCampaign.setStatus(CampaignStatus.PENDING_VERIFICATION);
+
+        when(campaignRepository.findAll()).thenReturn(List.of(pendingCampaign));
 
         // Act
         List<Campaign> result = campaignService.getActiveCampaigns();
 
         // Assert
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getStatus()).isEqualTo(CampaignStatus.ACTIVE);
+        assertThat(result).isEmpty();
     }
+
+    @Test
+    void shouldReturnEmptyListWhenNoPendingCampaigns() {
+        // Arrange
+        Campaign activeCampaign = new Campaign();
+        activeCampaign.setStatus(CampaignStatus.ACTIVE);
+
+        when(campaignRepository.findAll()).thenReturn(List.of(activeCampaign));
+
+        // Act
+        List<Campaign> result = campaignService.getPendingCampaigns();
+
+        // Assert
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void shouldGetAllCampaigns() {
+        // Arrange
+        Campaign campaign1 = new Campaign();
+        campaign1.setId(1L);
+        campaign1.setStatus(CampaignStatus.ACTIVE);
+
+        Campaign campaign2 = new Campaign();
+        campaign2.setId(2L);
+        campaign2.setStatus(CampaignStatus.PENDING_VERIFICATION);
+
+        when(campaignRepository.findAll()).thenReturn(List.of(campaign1, campaign2));
+
+        // Act
+        List<Campaign> result = campaignService.getAllCampaigns();
+
+        // Assert
+        assertThat(result).hasSize(2);
+        verify(campaignRepository, times(1)).findAll();
+    }
+
+    @Test
+    void shouldGetCampaignById() {
+        // Arrange
+        Campaign campaign = new Campaign();
+        campaign.setId(1L);
+        campaign.setTitle("Test Campaign");
+
+        when(campaignRepository.findById(1L)).thenReturn(Optional.of(campaign));
+
+        // Act
+        Optional<Campaign> result = campaignService.getCampaignById(1L);
+
+        // Assert
+        assertThat(result).isPresent();
+        assertThat(result.get().getTitle()).isEqualTo("Test Campaign");
+        verify(campaignRepository, times(1)).findById(1L);
+    }
+
+    @Test
+    void shouldReturnEmptyWhenCampaignNotFound() {
+        // Arrange
+        when(campaignRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // Act
+        Optional<Campaign> result = campaignService.getCampaignById(999L);
+
+        // Assert
+        assertThat(result).isEmpty();
+        verify(campaignRepository, times(1)).findById(999L);
+    }
+
 }
