@@ -21,11 +21,11 @@ class CommentControllerTest {
     @Test
     void addComment_Succeeds() throws Exception {
         String json = """
-           {
-             "userId": "user1",
-             "text": "Great job!"
-           }
-           """;
+          {
+            "userId": "user1",
+            "text": "Great job!"
+          }
+          """;
 
         mvc.perform(post("/donations/campA/comments")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -40,11 +40,11 @@ class CommentControllerTest {
     void listComments_Succeeds() throws Exception {
         // create one comment
         String json = """
-           {
-             "userId": "u2",
-             "text": "Nice work!"
-           }
-           """;
+          {
+            "userId": "u2",
+            "text": "Nice work!"
+          }
+          """;
         mvc.perform(post("/donations/campB/comments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))

@@ -1,189 +1,191 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Donate & Comment</title>
-    <!-- Bootstrap 5 CSS -->
-    <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-            rel="stylesheet"
-    >
+    <title>GatherLove Donate & Comment</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f7f9fc;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #444;
+        }
+        h2 {
+            margin-top: 30px;
+            color: #2a5885;
+        }
+        .section,
+        form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #2a5885;
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1f4569;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+        .text-success {
+            color: green;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        ul li {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        ul li button {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .text-muted {
+            color: #999;
+        }
+    </style>
 </head>
 <body>
-
+<!-- NAVBAR -->
 <div id="navbar-placeholder"></div>
 
-<div class="container py-4">
+<h1>GatherLove Donation</h1>
 
-    <!-- Make a Donation -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-body">
-            <h1 class="card-title mb-4">Make a Donation</h1>
-            <form id="donation-form">
-                <div class="mb-3">
-                    <label for="userId" class="form-label">Your User ID</label>
-                    <input
-                            type="text"
-                            class="form-control"
-                            id="userId"
-                            value="user1"
-                            required
-                    >
-                </div>
-                <div class="mb-3">
-                    <label for="campaignId" class="form-label">Campaign ID</label>
-                    <input
-                            type="text"
-                            class="form-control"
-                            id="campaignId"
-                            placeholder="e.g. campA"
-                            required
-                    >
-                </div>
-                <div class="mb-3">
-                    <label for="amount" class="form-label">Amount</label>
-                    <input
-                            type="number"
-                            class="form-control"
-                            id="amount"
-                            min="0.01"
-                            step="0.01"
-                            required
-                    >
-                </div>
-                <button type="submit" class="btn btn-primary">Donate</button>
-            </form>
-            <div id="donation-msg" class="mt-3"></div>
-        </div>
-    </div>
+<!-- Donation Form -->
+<div class="section">
+    <h2>Make a Donation</h2>
+    <form id="donation-form">
+        <input type="text"   id="userId"     placeholder="Your User ID"                   value="user1" required>
+        <input type="text"   id="campaignId" placeholder="Campaign ID (e.g. campA)"        required>
+        <input type="number" id="amount"     placeholder="Amount" min="0.01" step="0.01" required>
+        <button type="submit">Donate</button>
+        <div id="donation-msg" class="error"></div>
+    </form>
+</div>
 
-    <!-- Donation History -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-body">
-            <h2 class="card-title mb-3">Your Donation History</h2>
-            <div class="d-flex align-items-center mb-3">
-                <button id="view-history" class="btn btn-secondary me-2">
-                    View My Donation History
-                </button>
-                <a href="donation-history.html" class="btn btn-link">
-                    See Full Donation History
-                </a>
-            </div>
-            <ul id="history" class="list-group"></ul>
-        </div>
-    </div>
+<!-- Donation History Preview -->
+<div class="section">
+    <h2>Your Donation History</h2>
+    <button id="view-history">🔄 Refresh History</button>
+    <a href="donation-history.html"><button type="button">See Full History</button></a>
+    <ul id="history"></ul>
+</div>
 
-    <!-- Leave a Comment -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-body">
-            <h1 class="card-title mb-4">Leave a Comment</h1>
-            <form id="comment-form">
-                <div class="mb-3">
-                    <label for="cUserId" class="form-label">Your User ID</label>
-                    <input
-                            type="text"
-                            class="form-control"
-                            id="cUserId"
-                            value="user1"
-                            required
-                    >
-                </div>
-                <div class="mb-3">
-                    <label for="cCampaignId" class="form-label">Campaign ID</label>
-                    <input
-                            type="text"
-                            class="form-control"
-                            id="cCampaignId"
-                            placeholder="e.g. campA"
-                            required
-                    >
-                </div>
-                <div class="mb-3">
-                    <label for="commentText" class="form-label">Comment</label>
-                    <textarea
-                            class="form-control"
-                            id="commentText"
-                            rows="3"
-                            placeholder="Your supportive message…"
-                            required
-                    ></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">Post Comment</button>
-            </form>
-            <div id="comment-msg" class="mt-3"></div>
-        </div>
-    </div>
+<!-- Comment Form -->
+<div class="section">
+    <h2>Leave a Comment</h2>
+    <form id="comment-form">
+        <input type="text"    id="cUserId"     placeholder="Your User ID"                   value="user1" required>
+        <input type="text"    id="cCampaignId" placeholder="Campaign ID (e.g. campA)"        required>
+        <textarea id="commentText" rows="3"    placeholder="Your supportive message…"       required></textarea>
+        <button type="submit">Post Comment</button>
+        <div id="comment-msg" class="error"></div>
+    </form>
+</div>
 
-    <!-- Comments List -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-body">
-            <h2 class="card-title mb-3">Comments</h2>
-            <button id="refresh-comments" class="btn btn-secondary mb-3">
-                Refresh Comments
-            </button>
-            <ul id="comments" class="list-group"></ul>
-        </div>
-    </div>
-
+<!-- Comments List -->
+<div class="section">
+    <h2>Comments</h2>
+    <button id="refresh-comments">🔄 Refresh Comments</button>
+    <ul id="comments"></ul>
 </div>
 
 <script>
+    // load navbar
     fetch('/navbar.html')
-        .then(response => response.text())
-        .then(data => {
-            document.getElementById('navbar-placeholder').innerHTML = data;
-        });
+        .then(r => r.text())
+        .then(html => document.getElementById('navbar-placeholder').innerHTML = html);
+
     const API = '/donations';
 
-    // — Donation section —
-    const dForm   = document.getElementById('donation-form');
-    const dMsg    = document.getElementById('donation-msg');
-    const histEl  = document.getElementById('history');
-    const viewBtn = document.getElementById('view-history');
+    // ── Donation logic ─────────────────────────────────────
+    const form   = document.getElementById('donation-form');
+    const msgD   = document.getElementById('donation-msg');
+    const histEl = document.getElementById('history');
 
-    viewBtn.addEventListener('click', () => loadHistory(getUser()));
+    document.getElementById('view-history')
+        .addEventListener('click', () => loadHistory(getUser()));
 
-    dForm.addEventListener('submit', async e => {
+    form.addEventListener('submit', async e => {
         e.preventDefault();
-        clearMsg(dMsg);
+        msgD.textContent = '';
+        msgD.className   = 'error';
+
+        const payload = {
+            userId:     getUser(),
+            campaignId: document.getElementById('campaignId').value.trim(),
+            amount:     parseFloat(document.getElementById('amount').value)
+        };
+
         try {
             const resp = await fetch(API, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId:     getUser(),
-                    campaignId: document.getElementById('campaignId').value.trim(),
-                    amount:     parseFloat(document.getElementById('amount').value)
-                })
+                body: JSON.stringify(payload)
             });
-            if (!resp.ok) throw new Error(await resp.text());
+            if (!resp.ok) {
+                if (resp.status === 400) throw new Error('Please enter a valid donation amount.');
+                else                      throw new Error('Server error, please try again later.');
+            }
             const d = await resp.json();
-            showMsg(dMsg, `✓ Donated $${d.amount.toFixed(2)} to ${d.campaignId}!`, 'success');
-            dForm.reset();
+            msgD.textContent = `✓ Donated $${d.amount.toFixed(2)} to ${d.campaignId}!`;
+            msgD.className   = 'text-success';
+            form.reset();
             loadHistory(getUser());
         } catch (err) {
-            showMsg(dMsg, err.message, 'error');
+            msgD.textContent = err.message;
         }
     });
 
     async function loadHistory(userId) {
         histEl.innerHTML = '';
-        clearMsg(dMsg);
         try {
             const resp = await fetch(`${API}?userId=${encodeURIComponent(userId)}`);
             if (!resp.ok) throw new Error('Could not load history');
             const list = await resp.json();
             if (!list.length) {
-                histEl.innerHTML = '<li class="list-group-item">No donations yet.</li>';
+                histEl.innerHTML = '<li>No donations yet.</li>';
                 return;
             }
-            for (const d of list) {
+            list.forEach(d => {
                 const li = document.createElement('li');
-                li.className = 'list-group-item d-flex justify-content-between align-items-center';
                 li.textContent = `#${d.id.slice(0,8)} — $${d.amount.toFixed(2)}`;
                 if (!d.canceled) {
                     const btn = document.createElement('button');
-                    btn.className = 'btn btn-sm btn-outline-danger';
                     btn.textContent = 'Cancel';
                     btn.addEventListener('click', () => cancelDonation(d.id, userId));
                     li.appendChild(btn);
@@ -192,28 +194,26 @@
                     li.textContent += ' (canceled)';
                 }
                 histEl.appendChild(li);
-            }
+            });
         } catch (err) {
-            showMsg(dMsg, err.message, 'error');
+            histEl.innerHTML = `<li class="error">${err.message}</li>`;
         }
     }
 
     async function cancelDonation(id, userId) {
-        clearMsg(dMsg);
         try {
             const resp = await fetch(`${API}/${id}`, { method: 'DELETE' });
             if (!resp.ok) throw new Error('Cancel failed');
-            showMsg(dMsg, '↺ Donation canceled.', 'success');
             loadHistory(userId);
         } catch (err) {
-            showMsg(dMsg, err.message, 'error');
+            alert('Error: ' + err.message);
         }
     }
 
-    // — Comment section —
-    const cForm  = document.getElementById('comment-form');
-    const cMsg   = document.getElementById('comment-msg');
-    const comEl  = document.getElementById('comments');
+    // ── Comment logic ──────────────────────────────────────
+    const cForm = document.getElementById('comment-form');
+    const msgC  = document.getElementById('comment-msg');
+    const comEl = document.getElementById('comments');
 
     document.getElementById('refresh-comments')
         .addEventListener('click', () => {
@@ -223,70 +223,55 @@
 
     cForm.addEventListener('submit', async e => {
         e.preventDefault();
-        clearMsg(cMsg);
+        msgC.textContent = '';
+        msgC.className   = 'error';
+
         const camp = document.getElementById('cCampaignId').value.trim();
+        const payload = {
+            userId: document.getElementById('cUserId').value.trim(),
+            text:   document.getElementById('commentText').value.trim()
+        };
+
         try {
             const resp = await fetch(`${API}/${encodeURIComponent(camp)}/comments`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: document.getElementById('cUserId').value.trim(),
-                    text:   document.getElementById('commentText').value.trim()
-                })
+                body: JSON.stringify(payload)
             });
             if (!resp.ok) throw new Error(await resp.text());
-            showMsg(cMsg, '✓ Comment posted!', 'success');
+            msgC.textContent = '✓ Comment posted!';
+            msgC.className   = 'text-success';
             cForm.reset();
             loadComments(camp);
         } catch (err) {
-            showMsg(cMsg, err.message, 'error');
+            msgC.textContent = err.message;
         }
     });
 
     async function loadComments(camp) {
         comEl.innerHTML = '';
-        clearMsg(cMsg);
         try {
             const resp = await fetch(`${API}/${encodeURIComponent(camp)}/comments`);
             if (!resp.ok) throw new Error('Could not load comments');
             const list = await resp.json();
             if (!list.length) {
-                comEl.innerHTML = '<li class="list-group-item">No comments yet.</li>';
+                comEl.innerHTML = '<li>No comments yet.</li>';
                 return;
             }
-            for (const c of list) {
+            list.forEach(c => {
                 const li = document.createElement('li');
-                li.className = 'list-group-item';
-                li.textContent =
-                    `${c.userId}: ${c.text}` +
-                    (c.timestamp
-                        ? ` (${new Date(c.timestamp).toLocaleString()})`
-                        : '');
+                li.textContent = `${c.userId}: ${c.text}` +
+                    (c.timestamp ? ` (${new Date(c.timestamp).toLocaleString()})` : '');
                 comEl.appendChild(li);
-            }
+            });
         } catch (err) {
-            showMsg(cMsg, err.message, 'error');
+            comEl.innerHTML = `<li class="error">${err.message}</li>`;
         }
     }
 
-    function getUser() { return document.getElementById('userId').value.trim(); }
-
-    // use Bootstrap text classes for messages
-    function showMsg(el, text, type) {
-        el.textContent = text;
-        el.className = type === 'success' ? 'text-success' : 'text-danger';
+    function getUser() {
+        return document.getElementById('userId').value.trim();
     }
-    function clearMsg(el) {
-        el.textContent = '';
-        el.className = '';
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const u     = getUser();
-        const cCamp = document.getElementById('cCampaignId').value.trim();
-        if (u)     loadHistory(u);
-        if (cCamp) loadComments(cCamp);
-    });
 </script>
 </body>
 </html>

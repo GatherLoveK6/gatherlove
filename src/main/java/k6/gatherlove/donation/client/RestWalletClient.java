@@ -1,30 +1,28 @@
 package k6.gatherlove.donation.client;
 
-import k6.gatherlove.donation.client.WalletClient;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 @Service
 public class RestWalletClient implements WalletClient {
     private final RestTemplate rest;
 
-    // if no property is set, it will fall back to http://localhost:8081
-    @Value("${wallet.service.url:http://localhost:8081}")
-    private String walletBaseUrl;
-
     public RestWalletClient(RestTemplateBuilder builder) {
-        this.rest = builder.build();
+        this.rest = builder
+                .uriTemplateHandler(new DefaultUriBuilderFactory("http://localhost:8080"))
+                .build();
     }
 
     @Override
     public void deduct(String userId, double amount) {
         rest.postForEntity(
-                walletBaseUrl + "/wallets/{userId}/deduct",
-                Map.of("amount", amount),
+                "/users/{userId}/wallet/withdraw",
+                Map.of("amount", BigDecimal.valueOf(amount)),
                 Void.class,
                 userId
         );
@@ -33,8 +31,8 @@ public class RestWalletClient implements WalletClient {
     @Override
     public void refund(String userId, double amount) {
         rest.postForEntity(
-                walletBaseUrl + "/wallets/{userId}/refund",
-                Map.of("amount", amount),
+                "/users/{userId}/wallet/topup",
+                Map.of("amount", BigDecimal.valueOf(amount)),
                 Void.class,
                 userId
         );

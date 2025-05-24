@@ -43,8 +43,8 @@ class DonationControllerTest {
         mvc.perform(post("/donations")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                   {"userId":"user1","campaignId":"campA","amount":10.0}
-                """))
+                  {"userId":"user1","campaignId":"campA","amount":10.0}
+               """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value("user1"))
                 .andExpect(jsonPath("$.campaignId").value("campA"))
@@ -62,8 +62,8 @@ class DonationControllerTest {
         MvcResult createResult = mvc.perform(post("/donations")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                           {"userId":"user1","campaignId":"campA","amount":10.0}
-                        """))
+                          {"userId":"user1","campaignId":"campA","amount":10.0}
+                       """))
                 .andExpect(status().isOk())
                 .andReturn();
 
