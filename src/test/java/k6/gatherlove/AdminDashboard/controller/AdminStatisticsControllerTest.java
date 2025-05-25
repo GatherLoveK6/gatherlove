@@ -2,26 +2,35 @@ package k6.gatherlove.AdminDashboard.controller;
 
 import k6.gatherlove.AdminDashboard.dto.AdminStatisticsResponse;
 import k6.gatherlove.AdminDashboard.service.AdminStatisticsService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(AdminStatisticsController.class)
+@ExtendWith(MockitoExtension.class)
 public class AdminStatisticsControllerTest {
 
-    @Autowired
+    @Mock
+    private AdminStatisticsService adminStatisticsService;
+
+    @InjectMocks
+    private AdminStatisticsController adminStatisticsController;
+
     private MockMvc mockMvc;
 
-    @MockBean
-    private AdminStatisticsService adminStatisticsService;
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(adminStatisticsController).build();
+    }
 
     @Test
     void testGetAdminStatistics() throws Exception {
@@ -29,7 +38,7 @@ public class AdminStatisticsControllerTest {
 
         when(adminStatisticsService.getPlatformStatistics()).thenReturn(mockResponse);
 
-        mockMvc.perform(get("/admin/statistics")
+        mockMvc.perform(get("/admin/stats")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalCampaigns").value(100))
