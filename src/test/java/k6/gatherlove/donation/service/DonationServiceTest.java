@@ -1,5 +1,7 @@
 package k6.gatherlove.donation.service;
 
+import k6.gatherlove.donation.client.CampaignClient;
+import k6.gatherlove.donation.client.WalletClient;
 import k6.gatherlove.donation.model.Donation;
 import k6.gatherlove.donation.repository.DonationRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,12 +20,23 @@ class DonationServiceTest {
     @Autowired
     private DonationRepository repo;
 
-    private DonationService service;
+    private DonationServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        repo.deleteAll();                                  // fresh DB
-        service = new DonationServiceImpl(repo);
+        repo.deleteAll();
+
+        WalletClient walletClient = new WalletClient() {
+            @Override public void deduct(String userId, double amount) { }
+            @Override public void refund(String userId, double amount) { }
+        };
+
+        CampaignClient campaignClient = new CampaignClient() {
+            @Override public void recordDonation(String campaignId, String donationId, double amount) { }
+            @Override public void removeDonation(String campaignId, String donationId) { }
+        };
+
+        service = new DonationServiceImpl(repo, walletClient, campaignClient);
     }
 
     @Test
@@ -38,7 +51,8 @@ class DonationServiceTest {
         assertThat(d.isConfirmed()).isTrue();
         assertThat(d.getAmount()).isEqualTo(amount);
         assertThat(d.getUserId()).isEqualTo("testUser");
-        assertThat(service.getUserBalance()).isEqualTo(initialBalance - amount);
+        assertThat(service.getUserBalance())
+                .isEqualTo(initialBalance - amount);
     }
 
     @Test
