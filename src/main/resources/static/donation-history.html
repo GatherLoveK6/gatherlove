@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Donation History</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f7f9fc; color: #333; }
+        h1 { text-align: center; color: #444; }
+        h2 { margin-top: 30px; color: #2a5885; }
+        form, .section { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 30px; }
+        input, textarea, select { width: 100%; padding: 10px; margin-top: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        button { background-color: #2a5885; color: white; padding: 10px 20px; font-size: 14px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #1f4569; }
+        .error { color: red; font-weight: bold; margin-top: -10px; }
+    </style>
+</head>
+<body>
+<h1>My Donation History</h1>
+
+<!-- Load History Form -->
+<h2>Load Donation History</h2>
+<form id="history-form">
+    <input
+            type="text"
+            id="userId"
+            placeholder="Your User ID"
+            value="user1"
+            required
+    />
+    <button type="submit">Load History</button>
+    <div id="history-error" class="error"></div>
+</form>
+
+<!-- History List -->
+<h2>Donation Records</h2>
+<div class="section">
+    <ul id="history-list"></ul>
+</div>
+
+<!-- Back Link -->
+<div class="section">
+    <a href="donation.html"><button type="button">← Back to Donate</button></a>
+</div>
+
+<script>
+    const API = '/donations';
+    const form       = document.getElementById('history-form');
+    const userInput  = document.getElementById('userId');
+    const listEl     = document.getElementById('history-list');
+    const errEl      = document.getElementById('history-error');
+
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        loadHistory(userInput.value.trim());
+    });
+
+    async function loadHistory(userId) {
+        listEl.innerHTML = '';
+        errEl.textContent = '';
+        try {
+            const resp = await fetch(`${API}?userId=${encodeURIComponent(userId)}`);
+            if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
+            const data = await resp.json();
+            if (!data.length) {
+                listEl.innerHTML = '<li>No donations found.</li>';
+                return;
+            }
+            data.forEach(d => {
+                const li = document.createElement('li');
+                li.textContent = `#${d.id.slice(0,8)} — $${d.amount.toFixed(2)}`;
+                if (!d.canceled) {
+                    const btn = document.createElement('button');
+                    btn.textContent = 'Cancel';
+                    btn.onclick = () => cancelDonation(d.id, userId);
+                    li.append(btn);
+                } else {
+                    li.textContent += ' (canceled)';
+                    li.style.color = '#666';
+                }
+                listEl.append(li);
+            });
+        } catch (err) {
+            errEl.textContent = err.message;
+        }
+    }
+
+    async function cancelDonation(id, userId) {
+        try {
+            const resp = await fetch(`${API}/${id}`, { method: 'DELETE' });
+            if (!resp.ok) throw new Error('Cancel failed');
+            loadHistory(userId);
+        } catch (err) {
+            errEl.textContent = err.message;
+        }
+    }
+
+    // Auto-load on page load if userId pre-filled
+    document.addEventListener('DOMContentLoaded', () => {
+        const u = userInput.value.trim();
+        if (u) loadHistory(u);
+    });
+</script>
+</body>
+</html>

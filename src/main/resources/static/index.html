@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>User's Wallet</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    body {
+      background: #f0eff5;
+      font-family: 'Segoe UI', sans-serif;
+      color: #333;
+      line-height: 1.4;
+      position: relative;
+    }
+    header {
+      background: #5a3cb3;
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-radius: 0 0 16px 16px;
+    }
+    header h1 { font-size: 24px; flex: 1 }
+    header input {
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: none;
+      font-size: 14px;
+      margin-right: 12px;
+      width: 140px;
+    }
+    header button {
+      background: #472a88;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s;
+    }
+    header button:hover { background: #3e236f }
+
+    .container {
+      display: flex;
+      max-width: 1200px;
+      margin: 24px auto;
+      gap: 24px;
+      padding: 0 16px;
+    }
+    aside {
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .card h2 {
+      font-size: 18px;
+      margin-bottom: 12px;
+      color: #5a3cb3;
+    }
+    .balance {
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 16px;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .actions button {
+      flex: 1 1 140px;
+    }
+    button {
+      background: #5a3cb3;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s;
+    }
+    button:hover { background: #472a88 }
+  </style>
+</head>
+<body>
+<div id="navbar-placeholder"></div>
+
+<header>
+  <h1 id="title">User's Wallet</h1>
+  <input id="headerUser" placeholder="User ID" />
+  <button onclick="getBalance()">Refresh</button>
+</header>
+
+<div class="container">
+  <aside>
+    <div class="card">
+      <h2>Payment Methods</h2>
+      <button onclick="goCreatePM()">Create Payment Method</button>
+    </div>
+  </aside>
+
+  <main>
+    <div class="card">
+      <h2>Total Balance</h2>
+      <div class="balance" id="balance">$0.00</div>
+      <div class="actions">
+        <button onclick="goTopUp()">Top Up</button>
+        <button onclick="goWithdraw()">Withdraw</button>
+        <button onclick="goTransactions()">Transactions</button>
+        <button onclick="goUpdatePM()">Update PM</button>
+        <button onclick="goDeletePM()">Delete PM</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  fetch('/navbar.html')
+          .then(response => response.text())
+          .then(data => {
+            document.getElementById('navbar-placeholder').innerHTML = data;
+          });
+  const headerUser = document.getElementById('headerUser');
+  const titleEl    = document.getElementById('title');
+
+  // Prefill dari query ?user=
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('user')) headerUser.value = params.get('user');
+
+  // Sync judul ketika user ID diubah
+  headerUser.addEventListener('input', () => {
+    const u = headerUser.value.trim();
+    titleEl.textContent = u ? `${u}'s Wallet` : "User's Wallet";
+  });
+  headerUser.dispatchEvent(new Event('input'));
+
+  // Redirect ke halaman create/update/delete/payment
+  function goCreatePM() {
+    const u = headerUser.value.trim();
+    if (!u) return alert('Please enter User ID');
+    location.href = `create-payment-method.html?user=${encodeURIComponent(u)}`;
+  }
+  function goUpdatePM() {
+    const u = headerUser.value.trim();
+    if (!u) return alert('Please enter User ID');
+    location.href = `update-payment-method.html?user=${encodeURIComponent(u)}`;
+  }
+  function goDeletePM() {
+    const u = headerUser.value.trim();
+    if (!u) return alert('Please enter User ID');
+    location.href = `delete-payment-method.html?user=${encodeURIComponent(u)}`;
+  }
+  function goTopUp() {
+    const u = headerUser.value.trim();
+    if (!u) return alert('Please enter User ID');
+    location.href = `topup.html?user=${encodeURIComponent(u)}`;
+  }
+  function goWithdraw() {
+    const u = headerUser.value.trim();
+    if (!u) return alert('Please enter User ID');
+    location.href = `withdraw.html?user=${encodeURIComponent(u)}`;
+  }
+  function goTransactions() {
+    const u = headerUser.value.trim();
+    if (!u) return alert('Please enter User ID');
+    location.href = `transactions.html?user=${encodeURIComponent(u)}`;
+  }
+
+  // Fetch dan tampilkan balance
+  function getBalance() {
+    const u = headerUser.value.trim();
+    if (!u) return;
+    fetch(`/users/${u}/wallet`)
+            .then(r => r.json())
+            .then(js => {
+              document.getElementById('balance')
+                      .textContent = `$${js.balance.toFixed(2)}`;
+            })
+            .catch(() => {
+              document.getElementById('balance')
+                      .textContent = '$0.00';
+            });
+  }
+
+  // Auto-refresh balance saat page load jika sudah ada user
+  window.addEventListener('DOMContentLoaded', () => {
+    if (headerUser.value.trim()) {
+      getBalance();
+    }
+  });
+</script>
+</body>
+</html>

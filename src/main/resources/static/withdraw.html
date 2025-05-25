@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Withdraw</title>
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0 }
+    body {
+      background:#f0eff5;
+      font-family:'Segoe UI',sans-serif;
+      color:#333;
+      display:flex; align-items:center; justify-content:center;
+      height:100vh;
+    }
+    .card {
+      background:#fff;
+      border-radius:12px;
+      padding:24px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.05);
+      width:320px;
+    }
+    .form-group { margin-bottom:16px; display:flex; flex-direction:column }
+    label { margin-bottom:6px; color:#555; font-size:14px }
+    input {
+      padding:8px; border:1px solid #ccc; border-radius:6px;
+      font-size:14px;
+    }
+    button {
+      background:#5a3cb3; color:#fff; border:none;
+      border-radius:8px; padding:10px; font-size:14px;
+      cursor:pointer; width:100%; transition:background .3s;
+    }
+    button:hover { background:#472a88 }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h3>Withdraw</h3>
+  <div class="form-group">
+    <label>User ID</label>
+    <input id="userId" readonly />
+  </div>
+  <div class="form-group">
+    <label>Amount</label>
+    <input id="amount" type="number" placeholder="misal: 50" />
+  </div>
+  <button id="btnSubmit">Submit</button>
+</div>
+
+<script>
+  const p = new URLSearchParams(location.search);
+  const user = p.get('user') || '';
+  document.getElementById('userId').value = user;
+
+  document.getElementById('btnSubmit').onclick = () => {
+    const amt = parseFloat(document.getElementById('amount').value);
+    if (!user || !amt) {
+      return alert('Semua field harus diisi');
+    }
+    fetch(`/users/${user}/wallet/withdraw`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ amount: amt })
+    })
+            .then(res => {
+              if (!res.ok) throw new Error(res.statusText);
+              alert('Successfully withdrawn 🎉');
+              window.location.href = `index.html?user=${encodeURIComponent(user)}`;
+            })
+            .catch(e => alert('Error: ' + e.message));
+  };
+</script>
+</body>
+</html>

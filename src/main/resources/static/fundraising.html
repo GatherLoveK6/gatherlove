@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GatherLove Fundraising</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; background: #f7f9fc; color: #333; }
+    h1 { text-align: center; color: #444; }
+    h2 { margin-top: 30px; color: #2a5885; }
+    form, .section { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 30px; }
+    input, textarea, select { width: 100%; padding: 10px; margin-top: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+    button { background-color: #2a5885; color: white; padding: 10px 20px; font-size: 14px; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background-color: #1f4569; }
+    .error { color: red; font-weight: bold; margin-top: -10px; }
+    .campaign-card { background: #fff; border: 1px solid #ddd; border-left: 4px solid #2a5885; padding: 15px; margin-top: 20px; border-radius: 4px; }
+    .campaign-card h3 { margin-top: 0; color: #2a5885; }
+    .campaign-actions button { margin-right: 10px; }
+    .progress-bar { background: #eee; border-radius: 4px; overflow: hidden; margin: 8px 0; }
+    .progress-bar-inner { background: #2a5885; height: 16px; color: #fff; text-align: center; font-size: 12px; }
+    .proof-image { max-width: 200px; max-height: 200px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; }
+    .proof-section { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; }
+  </style>
+</head>
+<body>
+<div id="navbar-placeholder"></div>
+
+  <h1>GatherLove Fundraising</h1>
+
+  <!-- Create Campaign -->
+  <h2>Create Campaign</h2>
+  <form id="createCampaignForm">
+    <input type="text" id="campaignTitle" placeholder="Title" required>
+    <textarea id="campaignDescription" placeholder="Description (min 20 chars)" required></textarea>
+    <input type="number" id="campaignGoal" placeholder="Goal Amount" min="1" required>
+    <input type="date" id="campaignDeadline" required>
+    <button type="submit">Create Campaign</button>
+    <div id="createCampaignError" class="error"></div>
+  </form>
+
+  <!-- My Campaigns -->
+  <h2>My Campaigns</h2>
+  <div class="section">
+    <button onclick="loadMyCampaigns()">🔄 Refresh My Campaigns</button>
+    <div id="myCampaignsOutput"></div>
+  </div>
+
+  <!-- Active Campaigns (for all users) -->
+  <h2>Active Campaigns</h2>
+  <div class="section">
+    <button onclick="loadActiveCampaigns()">🔄 Refresh Active Campaigns</button>
+    <div id="activeCampaignsOutput"></div>
+  </div>
+
+  <script>
+    fetch('/navbar.html')
+            .then(response => response.text())
+            .then(data => {
+              document.getElementById('navbar-placeholder').innerHTML = data;
+            });
+    // Add error handling and debugging
+    async function fetchWithErrorHandling(url, options = {}) {
+        try {
+            const response = await fetch(url, {
+                ...options,
+                credentials: "include"
+            });
+            
+            // Check if response is redirecting to login page
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("text/html")) {
+                const text = await response.text();
+                if (text.includes("<title>Login") || text.includes("login") || text.includes("Log in")) {
+                    throw new Error("Please log in to continue");
+                }
+                throw new Error("Received HTML instead of JSON. You may need to log in.");
+            }
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                try {
+                    // Try to parse as JSON
+                    const errorJson = JSON.parse(errorText);
+                    throw new Error(errorJson.message || `Server error: ${response.status}`);
+                } catch (e) {
+                    // If not JSON, use the text
+                    throw new Error(errorText || `Server error: ${response.status}`);
+                }
+            }
+            
+            if (response.status === 204) {
+                return null; // No content
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error("API error:", error);
+            throw error;
+        }
+    }
+    
+    // Create Campaign
+    document.getElementById("createCampaignForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const title = document.getElementById("campaignTitle").value.trim();
+      const description = document.getElementById("campaignDescription").value.trim();
+      const goalAmount = document.getElementById("campaignGoal").value;
+      const deadline = document.getElementById("campaignDeadline").value;
+      const errorDiv = document.getElementById("createCampaignError");
+      errorDiv.textContent = "";
+
+      try {
+        await fetchWithErrorHandling("/api/fundraising/campaigns", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title, description, goalAmount, deadline })
+        });
+        alert("Campaign created! It will be visible after verification.");
+        loadMyCampaigns();
+      } catch (err) {
+        errorDiv.textContent = err.message || "Failed to create campaign.";
+      }
+    });
+
+    // Load My Campaigns
+    async function loadMyCampaigns() {
+      const out = document.getElementById("myCampaignsOutput");
+      out.innerHTML = "<p>Loading your campaigns...</p>";
+      try {
+        const campaigns = await fetchWithErrorHandling("/api/fundraising/campaigns/my-campaigns");
+        
+        if (!campaigns || campaigns.length === 0) {
+          out.innerHTML = "<p>You don't have any campaigns yet.</p>";
+          return;
+        }
+        
+        out.innerHTML = ""; // Clear previous content
+        campaigns.forEach(c => {
+          const div = document.createElement("div");
+          div.className = "campaign-card";
+          div.innerHTML = `
+            <h3>${c.title}</h3>
+            <div>Status: <b>${c.status}</b></div>
+            <div>Goal: ${c.goalAmount} | Raised: ${c.currentAmount || 0}</div>
+            <div>Deadline: ${c.deadline}</div>
+            <div>${c.description}</div>
+            ${c.proofFilePath ? `
+              <div class="proof-section">
+                <div><strong>Proof of Fund Usage:</strong></div>
+                <img src="/api/fundraising/files/${c.proofFilePath}" alt="Proof of fund usage" class="proof-image" onerror="this.style.display='none'">
+              </div>
+            ` : ''}
+            <div class="campaign-actions"></div>
+          `;
+          // Actions: Update, Delete, Upload Proof (if allowed)
+          const actions = div.querySelector(".campaign-actions");
+          if (c.status === "PENDING_VERIFICATION") {
+            const btnUpdate = document.createElement("button");
+            btnUpdate.textContent = "Update";
+            btnUpdate.onclick = () => updateCampaignPrompt(c);
+            actions.appendChild(btnUpdate);
+
+            const btnDelete = document.createElement("button");
+            btnDelete.textContent = "Delete";
+            btnDelete.onclick = async () => {
+              if (confirm("Delete this campaign?")) {
+                await fetch(`/api/fundraising/campaigns/${c.id}`, { 
+                  method: "DELETE", 
+                  credentials: "include" 
+                });
+                loadMyCampaigns();
+              }
+            };
+            actions.appendChild(btnDelete);
+          }
+          if (c.status === "ACTIVE") {
+            const btnProof = document.createElement("button");
+            btnProof.textContent = "Upload Proof";
+            btnProof.onclick = () => uploadProofPrompt(c.id);
+            actions.appendChild(btnProof);
+          }
+          out.appendChild(div);
+        });
+      } catch (err) {
+        out.innerHTML = `<p>Error: ${err.message}</p>`;
+        console.error("Failed to load campaigns:", err);
+        
+        // If login is required, show a login button
+        if (err.message.includes("log in")) {
+          const loginBtn = document.createElement("button");
+          loginBtn.textContent = "Log In";
+          loginBtn.onclick = () => window.location.href = "/auth/login";
+          out.appendChild(loginBtn);
+        }
+      }
+    }
+
+    // Load Active Campaigns
+    async function loadActiveCampaigns() {
+      const out = document.getElementById("activeCampaignsOutput");
+      out.innerHTML = "<p>Loading active campaigns...</p>";
+      try {
+        const campaigns = await fetchWithErrorHandling("/api/fundraising/campaigns/active");
+        
+        if (campaigns.length === 0) {
+          out.innerHTML = "<p>No active campaigns available.</p>";
+          return;
+        }
+        
+        out.innerHTML = ""; // Clear previous content
+        campaigns.forEach(c => {
+          const div = document.createElement("div");
+          div.className = "campaign-card";
+          const percent = c.goalAmount > 0 ? Math.round((c.currentAmount / c.goalAmount) * 100) : 0;
+          div.innerHTML = `
+            <h3>${c.title}</h3>
+            <div>Status: <b>${c.status}</b></div>
+            <div>Goal: ${c.goalAmount} | Raised: ${c.currentAmount || 0}</div>
+            <div class="progress-bar"><div class="progress-bar-inner" style="width:${percent}%">${percent}%</div></div>
+            <div>Deadline: ${c.deadline}</div>
+            <div>${c.description}</div>
+            ${c.proofFilePath ? `
+              <div class="proof-section">
+                <div><strong>Proof of Fund Usage:</strong></div>
+                <img src="/api/fundraising/files/${c.proofFilePath}" alt="Proof of fund usage" class="proof-image" onerror="this.style.display='none'">
+              </div>
+            ` : ''}
+            <div class="campaign-actions"></div>
+          `;
+          // Actions: Donate, Report
+          const actions = div.querySelector(".campaign-actions");
+          const btnDonate = document.createElement("button");
+          btnDonate.textContent = "Donate";
+          btnDonate.onclick = () => donatePrompt(c.id);
+          actions.appendChild(btnDonate);
+
+          const btnReport = document.createElement("button");
+          btnReport.textContent = "Report";
+          btnReport.onclick = () => window.location.href = "/report.html"; 
+          actions.appendChild(btnReport);
+
+          out.appendChild(div);
+        });
+      } catch (err) {
+        out.innerHTML = `<p>Error: ${err.message}</p>`;
+      }
+    }
+
+    // Prompt for updating campaign
+    function updateCampaignPrompt(campaign) {
+      const title = prompt("New title:", campaign.title);
+      if (title === null) return;
+      const description = prompt("New description:", campaign.description);
+      if (description === null) return;
+      const goalAmount = prompt("New goal amount:", campaign.goalAmount);
+      if (goalAmount === null) return;
+      const deadline = prompt("New deadline (YYYY-MM-DD):", campaign.deadline);
+      if (deadline === null) return;
+      
+      fetch(`/api/fundraising/campaigns/${campaign.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // Important for sending cookies with request
+        body: JSON.stringify({ title, description, goalAmount, deadline })
+      }).then(response => {
+        if (response.ok) {
+          alert("Campaign updated successfully!");
+        } else {
+          alert("Failed to update campaign.");
+        }
+        loadMyCampaigns();
+      }).catch(error => {
+        alert("Error updating campaign: " + error.message);
+      });
+    }
+
+    // Prompt for uploading proof
+    function uploadProofPrompt(campaignId) {
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.onchange = async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        
+        const formData = new FormData();
+        formData.append("file", file);
+        
+        try {
+          const response = await fetch(`/api/fundraising/campaigns/${campaignId}/proof`, {
+            method: "POST",
+            credentials: "include", // Important for sending cookies with request
+            body: formData
+          });
+          
+          if (response.ok) {
+            alert("Proof uploaded successfully!");
+          } else {
+            alert("Failed to upload proof.");
+          }
+          loadMyCampaigns();
+        } catch (error) {
+          alert("Error uploading proof: " + error.message);
+        }
+      };
+      fileInput.click();
+    }
+
+    // Prompt for donating
+    function donatePrompt(campaignId) {
+      const amount = prompt("Enter donation amount:");
+      if (!amount || isNaN(parseFloat(amount))) {
+        alert("Please enter a valid amount");
+        return;
+      }
+      
+      fetch("/donations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // Important for sending cookies with request
+        body: JSON.stringify({ 
+          amount: parseFloat(amount), 
+          campaignId: campaignId.toString() 
+        })
+      }).then(response => {
+        if (response.ok) {
+          alert("Thank you for your donation!");
+        } else {
+          alert("Donation failed. Please try again.");
+        }
+        loadActiveCampaigns();
+      }).catch(error => {
+        alert("Error processing donation: " + error.message);
+      });
+    }
+
+    // Initial load
+    window.addEventListener("DOMContentLoaded", () => {
+      loadMyCampaigns();
+      loadActiveCampaigns();
+    });
+  </script>
+</body>
+</html>

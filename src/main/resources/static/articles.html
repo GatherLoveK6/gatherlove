@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>GatherLove Article Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f7f9fc;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #444;
+        }
+
+        h2 {
+            margin-top: 30px;
+            color: #2a5885;
+        }
+
+        form, .section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: #2a5885;
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        button:hover {
+            background-color: #1f4569;
+        }
+
+        hr {
+            margin: 20px 0;
+        }
+
+        .article-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-left: 4px solid #2a5885;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+
+        .comment-box {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+<div id="navbar-placeholder"></div>
+<h1>GatherLove Article Management</h1>
+
+<div class="section">
+    <h2>Create Article</h2>
+    <form id="createForm">
+        <input type="text" id="title" placeholder="Title" required>
+        <textarea id="content" placeholder="Content" required></textarea>
+        <input type="text" id="author" placeholder="Author" required>
+        <button type="submit">Create Article</button>
+    </form>
+</div>
+
+<div class="section">
+    <h2>All Articles</h2>
+    <button onclick="getAllArticles()">Fetch Articles</button>
+    <div id="articlesOutput"></div>
+</div>
+
+<div class="section">
+    <h2>Update Article</h2>
+    <form id="updateForm">
+        <input type="number" id="updateId" placeholder="Article ID" required>
+        <input type="text" id="updateTitle" placeholder="New Title" required>
+        <textarea id="updateContent" placeholder="New Content" required></textarea>
+        <input type="text" id="updateAuthor" placeholder="New Author" required>
+        <button type="submit">Update Article</button>
+    </form>
+</div>
+
+<div class="section">
+    <h2>Delete Article</h2>
+    <input type="number" id="deleteId" placeholder="Article ID" required>
+    <button onclick="deleteArticle()">Delete</button>
+    <div id="deleteStatus"></div>
+</div>
+
+<script>
+    fetch('/navbar.html')
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('navbar-placeholder').innerHTML = data;
+        });
+    document.getElementById("createForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const payload = {
+            title: document.getElementById("title").value,
+            content: document.getElementById("content").value,
+            author: document.getElementById("author").value
+        };
+        const response = await fetch("/articles", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        alert(await response.text());
+    });
+
+    async function getAllArticles() {
+        const response = await fetch("/articles");
+        const output = document.getElementById("articlesOutput");
+        output.innerHTML = "";
+
+        if (!response.ok) {
+            output.innerText = "Error fetching articles.";
+            return;
+        }
+
+        const articles = await response.json();
+        if (articles.length === 0) {
+            output.innerText = "No articles available.";
+            return;
+        }
+
+        articles.forEach(article => {
+            const div = document.createElement("div");
+            div.className = "article-card";
+            div.innerHTML = `
+                <strong>ID:</strong> ${article.id}<br>
+                <strong>Title:</strong> ${article.title}<br>
+                <strong>Author:</strong> ${article.author}<br>
+                <strong>Content:</strong> ${article.content}<br>
+                <strong>Likes:</strong> ${article.likes}<br>
+                <button onclick="likeArticle(${article.id})">Like</button>
+
+                <div style="margin-top: 10px;">
+                    <input type="text" id="comment-username-${article.id}" placeholder="Your name" />
+                    <input type="text" id="comment-content-${article.id}" placeholder="Your comment" />
+                    <button onclick="addComment(${article.id})">Add Comment</button>
+                </div>
+
+                <button onclick="fetchComments(${article.id})">Show Comments</button>
+                <div id="comments-${article.id}" class="comment-box"></div>
+            `;
+            output.appendChild(div);
+        });
+    }
+
+    document.getElementById("updateForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const id = document.getElementById("updateId").value;
+        const payload = {
+            title: document.getElementById("updateTitle").value,
+            content: document.getElementById("updateContent").value,
+            author: document.getElementById("updateAuthor").value
+        };
+        const response = await fetch(`/articles/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        alert(await response.text());
+    });
+
+    async function deleteArticle() {
+        const id = document.getElementById("deleteId").value;
+        const response = await fetch(`/articles/${id}`, {
+            method: "DELETE"
+        });
+        document.getElementById("deleteStatus").innerText = await response.text();
+    }
+
+    async function likeArticle(id) {
+        const response = await fetch(`/articles/${id}/like`, { method: "POST" });
+        if (response.ok) {
+            alert("Article liked!");
+            getAllArticles();
+        } else {
+            alert("Failed to like article.");
+        }
+    }
+
+    async function addComment(articleId) {
+        const username = document.getElementById(`comment-username-${articleId}`).value;
+        const content = document.getElementById(`comment-content-${articleId}`).value;
+
+        const params = new URLSearchParams({ username, content });
+
+        const response = await fetch(`/articles/${articleId}/comments?${params}`, {
+            method: "POST"
+        });
+
+        if (response.ok) {
+            alert("Comment added!");
+            fetchComments(articleId);
+        } else {
+            alert("Failed to add comment.");
+        }
+    }
+
+    async function fetchComments(articleId) {
+        const response = await fetch(`/articles/${articleId}/comments`);
+        const container = document.getElementById(`comments-${articleId}`);
+        container.innerHTML = "";
+
+        if (!response.ok) {
+            container.innerText = "Error loading comments.";
+            return;
+        }
+
+        const comments = await response.json();
+        if (comments.length === 0) {
+            container.innerText = "No comments yet.";
+            return;
+        }
+
+        comments.forEach(c => {
+            const div = document.createElement("div");
+            div.innerHTML = `<strong>${c.username}:</strong> ${c.content}`;
+            container.appendChild(div);
+        });
+    }
+</script>
+</body>
+</html>

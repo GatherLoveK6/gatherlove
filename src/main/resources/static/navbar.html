@@ -1,0 +1,83 @@
+<!-- navbar.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        /* ─── Navbar ────────────────────────────────────────────────────────── */
+        nav.navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fff;
+            padding: 0.75rem 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .navbar-menu {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .navbar-menu li a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .navbar-user span {
+            font-weight: 600;
+        }
+
+        .btn-logout {
+            padding: 0.4rem 0.75rem;
+            background: #dc3545;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 0.25rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .btn-logout:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-brand">GatherLove</div>
+    <ul class="navbar-menu">
+        <li><a href="/home">Home</a></li>
+        <li><a href="/fundraising.html">Fundraising</a></li>
+        <li><a href="/articles.html">Article</a></li>
+        <li><a href="/donation.html">Donation</a></li>
+        <li><a href="/report.html">Report</a></li>
+        <li><a href="/index.html">Wallet</a></li>
+        <li>
+            <a href="https://www.linkedin.com/in/kevinadriano1512/?originalSubdomain=id"
+               target="_blank" rel="noopener">Kevin</a>
+        </li>
+        <li><a href="/admin-dashboard.html">Admin Dashboard</a></li>
+    </ul>
+    <div class="navbar-user">
+
+        <a href="/auth/logout" class="btn-logout">Log Out</a>
+    </div>
+</nav>
+</body>
+</html>
