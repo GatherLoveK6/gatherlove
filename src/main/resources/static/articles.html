@@ -66,6 +66,13 @@
             margin-top: 20px;
             border-radius: 4px;
         }
+
+        .comment-box {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -141,13 +148,22 @@
             const div = document.createElement("div");
             div.className = "article-card";
             div.innerHTML = `
-          <strong>ID:</strong> ${article.id}<br>
-          <strong>Title:</strong> ${article.title}<br>
-          <strong>Author:</strong> ${article.author}<br>
-          <strong>Content:</strong> ${article.content}<br>
-          <strong>Likes:</strong> ${article.likes} |
-          <strong>Comments:</strong> ${article.comments}
-        `;
+                <strong>ID:</strong> ${article.id}<br>
+                <strong>Title:</strong> ${article.title}<br>
+                <strong>Author:</strong> ${article.author}<br>
+                <strong>Content:</strong> ${article.content}<br>
+                <strong>Likes:</strong> ${article.likes}<br>
+                <button onclick="likeArticle(${article.id})">Like</button>
+
+                <div style="margin-top: 10px;">
+                    <input type="text" id="comment-username-${article.id}" placeholder="Your name" />
+                    <input type="text" id="comment-content-${article.id}" placeholder="Your comment" />
+                    <button onclick="addComment(${article.id})">Add Comment</button>
+                </div>
+
+                <button onclick="fetchComments(${article.id})">Show Comments</button>
+                <div id="comments-${article.id}" class="comment-box"></div>
+            `;
             output.appendChild(div);
         });
     }
@@ -174,6 +190,57 @@
             method: "DELETE"
         });
         document.getElementById("deleteStatus").innerText = await response.text();
+    }
+
+    async function likeArticle(id) {
+        const response = await fetch(`/articles/${id}/like`, { method: "POST" });
+        if (response.ok) {
+            alert("Article liked!");
+            getAllArticles();
+        } else {
+            alert("Failed to like article.");
+        }
+    }
+
+    async function addComment(articleId) {
+        const username = document.getElementById(`comment-username-${articleId}`).value;
+        const content = document.getElementById(`comment-content-${articleId}`).value;
+
+        const params = new URLSearchParams({ username, content });
+
+        const response = await fetch(`/articles/${articleId}/comments?${params}`, {
+            method: "POST"
+        });
+
+        if (response.ok) {
+            alert("Comment added!");
+            fetchComments(articleId);
+        } else {
+            alert("Failed to add comment.");
+        }
+    }
+
+    async function fetchComments(articleId) {
+        const response = await fetch(`/articles/${articleId}/comments`);
+        const container = document.getElementById(`comments-${articleId}`);
+        container.innerHTML = "";
+
+        if (!response.ok) {
+            container.innerText = "Error loading comments.";
+            return;
+        }
+
+        const comments = await response.json();
+        if (comments.length === 0) {
+            container.innerText = "No comments yet.";
+            return;
+        }
+
+        comments.forEach(c => {
+            const div = document.createElement("div");
+            div.innerHTML = `<strong>${c.username}:</strong> ${c.content}`;
+            container.appendChild(div);
+        });
     }
 </script>
 </body>
