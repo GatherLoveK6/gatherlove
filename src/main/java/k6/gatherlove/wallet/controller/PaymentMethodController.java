@@ -6,7 +6,6 @@ import k6.gatherlove.wallet.service.PaymentMethodService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
@@ -26,14 +25,14 @@ public class PaymentMethodController {
     @PostMapping
     public CompletableFuture<ResponseEntity<PaymentMethod>> create(
             @PathVariable String userId,
-            @RequestBody PaymentMethodDto body
+            @RequestBody PaymentMethodDto body,
+            UriComponentsBuilder uriBuilder
     ) {
-        UriComponentsBuilder base = ServletUriComponentsBuilder.fromCurrentRequest();
         return svc.createAsync(userId, body.getPaymentMethodId(), body.getType())
                 .thenApply(pm -> {
-                    URI location = base
-                            .path("/{pmId}")
-                            .buildAndExpand(pm.getPaymentMethodId())
+                    URI location = uriBuilder
+                            .path("/users/{userId}/payment-methods/{pmId}")
+                            .buildAndExpand(userId, pm.getPaymentMethodId())
                             .toUri();
                     return ResponseEntity.created(location).body(pm);
                 });
