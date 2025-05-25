@@ -2,77 +2,91 @@ package k6.gatherlove.ArticleManagement.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import k6.gatherlove.ArticleManagement.model.ArticleManagementModel;
-import k6.gatherlove.ArticleManagement.service.ArticleManagementService;
+import k6.gatherlove.ArticleManagement.repository.ArticleManagementRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(ArticleManagementController.class)
+@SpringBootTest
+@AutoConfigureMockMvc
 public class ArticleManagementControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
-    private ArticleManagementService articleService;
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private ArticleManagementRepository articleRepository;
 
     private ArticleManagementModel article;
 
     @BeforeEach
-    void setup() {
-        article = new ArticleManagementModel();
-        article.setId(1L);
-        article.setTitle("Test Title");
-        article.setContent("Test Content");
-        article.setAuthor("Admin");
+    void setUp() {
+        articleRepository.deleteAll();
+        article = ArticleManagementModel.builder()
+                .title("Test Title")
+                .content("Some content")
+                .author("Admin")
+                .likes(0)
+                .build();
+        article = articleRepository.save(article);
     }
 
     @Test
+    @WithMockUser
     void testGetAllArticles() throws Exception {
-        when(articleService.getAllArticles()).thenReturn(List.of(article));
-
         mockMvc.perform(get("/articles"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].title", is("Test Title")));
     }
 
     @Test
+    @WithMockUser
     void testCreateArticle() throws Exception {
-        when(articleService.createArticle(any())).thenReturn(article);
+        ArticleManagementModel newArticle = ArticleManagementModel.builder()
+                .title("New Article")
+                .content("New Content")
+                .author("Tester")
+                .build();
 
         mockMvc.perform(post("/articles")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(article)))
-                .andExpect(status().isOk());
+                        .content(objectMapper.writeValueAsString(newArticle)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("New Article"));
     }
 
     @Test
+    @WithMockUser
     void testUpdateArticle() throws Exception {
-        when(articleService.updateArticle(any(), any())).thenReturn(article);
+        article.setTitle("Updated Title");
 
-        mockMvc.perform(put("/articles/1")
+        mockMvc.perform(put("/articles/" + article.getId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(article)))
-                .andExpect(status().isOk());
+                        .content(objectMapper.writeValueAsString(article)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Updated Title"));
     }
 
     @Test
+    @WithMockUser
     void testDeleteArticle() throws Exception {
-        Mockito.doNothing().when(articleService).deleteArticle(1L);
-
-        mockMvc.perform(delete("/articles/1"))
+        mockMvc.perform(delete("/articles/" + article.getId()))
                 .andExpect(status().isNoContent());
     }
 }
