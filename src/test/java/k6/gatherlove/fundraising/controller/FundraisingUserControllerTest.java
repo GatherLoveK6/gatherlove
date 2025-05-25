@@ -10,10 +10,16 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Arrays;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -117,6 +123,87 @@ class FundraisingUserControllerTest {
         // Perform the request and verify
         mockMvc.perform(get("/api/fundraising/user/is-admin")
                 .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isAdmin").value(false));
+    }
+
+    @Test
+    void shouldReturnUserInfoWhenAuthenticated() throws Exception {
+        // Arrange
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("12345");
+        Collection<GrantedAuthority> authorities = Arrays.asList(new SimpleGrantedAuthority("ROLE_USER"));
+        doReturn(authorities).when(authentication).getAuthorities();
+
+        // Act & Assert
+        mockMvc.perform(get("/api/fundraising/user/info"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("12345"))
+                .andExpect(jsonPath("$.username").value("12345"))
+                .andExpect(jsonPath("$.numericId").value(12345));
+    }
+
+    @Test
+    void shouldReturnHashedNumericIdForNonNumericUserId() throws Exception {
+        // Arrange
+        String nonNumericUserId = "user@example.com";
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn(nonNumericUserId);
+        Collection<GrantedAuthority> authorities = Arrays.asList(new SimpleGrantedAuthority("ROLE_USER"));
+        doReturn(authorities).when(authentication).getAuthorities();
+
+        // Act & Assert
+        mockMvc.perform(get("/api/fundraising/user/info"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(nonNumericUserId))
+                .andExpect(jsonPath("$.username").value(nonNumericUserId))
+                .andExpect(jsonPath("$.numericId").value(Math.abs(nonNumericUserId.hashCode())));
+    }
+
+    @Test
+    void shouldReturnTrueForAdminUser() throws Exception {
+        // Arrange
+        when(authentication.isAuthenticated()).thenReturn(true);
+        Collection<GrantedAuthority> authorities = Arrays.asList(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        doReturn(authorities).when(authentication).getAuthorities();
+
+        // Act & Assert
+        mockMvc.perform(get("/api/fundraising/user/is-admin"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isAdmin").value(true));
+    }
+
+    @Test
+    void shouldReturnFalseForNonAdminUser() throws Exception {
+        // Arrange
+        when(authentication.isAuthenticated()).thenReturn(true);
+        Collection<GrantedAuthority> authorities = Arrays.asList(new SimpleGrantedAuthority("ROLE_USER"));
+        doReturn(authorities).when(authentication).getAuthorities();
+
+        // Act & Assert
+        mockMvc.perform(get("/api/fundraising/user/is-admin"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isAdmin").value(false));
+    }
+
+    @Test
+    void shouldReturnFalseForUnauthenticatedUserCheckingAdmin() throws Exception {
+        // Arrange
+        when(authentication.isAuthenticated()).thenReturn(false);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/fundraising/user/is-admin"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isAdmin").value(false));
+    }
+
+    @Test
+    void shouldReturnFalseForNullAuthenticationCheckingAdmin() throws Exception {
+        // Arrange
+        when(securityContext.getAuthentication()).thenReturn(null);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/fundraising/user/is-admin"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isAdmin").value(false));
     }
