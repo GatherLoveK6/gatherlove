@@ -1,24 +1,34 @@
 package k6.gatherlove.AdminDashboard.controller;
 
 import k6.gatherlove.AdminDashboard.service.AdminUserService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(AdminUserController.class)
+@ExtendWith(MockitoExtension.class)
 public class AdminUserControllerTest {
 
-    @Autowired
+    @Mock
+    private AdminUserService adminUserService;
+
+    @InjectMocks
+    private AdminUserController adminUserController;
+
     private MockMvc mockMvc;
 
-    @MockBean
-    private AdminUserService adminUserService;
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(adminUserController).build();
+    }
 
     @Test
     void testDeleteUserById() throws Exception {
