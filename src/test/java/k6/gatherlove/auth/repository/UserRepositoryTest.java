@@ -46,7 +46,8 @@ class UserRepositoryTest {
                 .get()
                 .satisfies(found -> {
                     assertThat(found.getId()).isEqualTo(saved.getId());
-                    assertThat(found.getUsername()).isEqualTo("alice123");
+                    assertThat(found.getEmail()).isEqualTo("alice@example.com");
+                    assertThat(found.getFullName()).isEqualTo("Alice Example");
                     assertThat(found.getRoles())
                             .containsExactly(Role.ROLE_USER);
                 });
