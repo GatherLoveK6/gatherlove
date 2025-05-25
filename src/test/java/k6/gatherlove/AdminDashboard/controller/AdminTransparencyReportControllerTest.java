@@ -1,15 +1,16 @@
 package k6.gatherlove.AdminDashboard.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import k6.gatherlove.AdminDashboard.dto.TransparencyReportResponse;
 import k6.gatherlove.AdminDashboard.service.AdminTransparencyReportService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
 
@@ -17,19 +18,21 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(AdminTransparencyReportController.class)
+@ExtendWith(MockitoExtension.class)
 public class AdminTransparencyReportControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean
+    @Mock
     private AdminTransparencyReportService adminTransparencyReportService;
 
+    @InjectMocks
+    private AdminTransparencyReportController adminTransparencyReportController;
+
+    private MockMvc mockMvc;
     private TransparencyReportResponse mockReport;
 
     @BeforeEach
     void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(adminTransparencyReportController).build();
         mockReport = new TransparencyReportResponse(
                 1L,
                 100000,
