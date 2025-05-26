@@ -28,6 +28,8 @@ public class SecurityConfig {
                         // allow login & register (and your static assets folder):
                         .requestMatchers("/auth/**", "/assets/**").permitAll()
                         .requestMatchers("/donations/**").permitAll()
+                        // Allow actuator endpoints for monitoring
+                        .requestMatchers("/actuator/**").permitAll()
                         // admin‐only dashboard:
                         .requestMatchers("/admin-dashboard.html").hasRole("ADMIN")
                         // everything else (including fundraising.html, donation.html, etc):
