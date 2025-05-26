@@ -1,22 +1,13 @@
 package k6.gatherlove.fundraising.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
 import k6.gatherlove.fundraising.dto.CampaignCreationRequest;
 import k6.gatherlove.fundraising.dto.CampaignUpdateRequest;
 import k6.gatherlove.fundraising.exception.ValidationException;
 import k6.gatherlove.fundraising.model.Campaign;
 import k6.gatherlove.fundraising.model.CampaignStatus;
 import k6.gatherlove.fundraising.repository.CampaignRepository;
+import k6.gatherlove.service.MetricsService;
+import io.micrometer.core.instrument.Timer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +15,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CampaignServiceTest {
@@ -33,6 +35,12 @@ class CampaignServiceTest {
 
     @Mock
     private FileStorageService fileStorageService;
+    
+    @Mock
+    private MetricsService metricsService;
+    
+    @Mock
+    private Timer.Sample timerSample;
 
     @InjectMocks
     private CampaignServiceImpl campaignService;
@@ -67,11 +75,21 @@ class CampaignServiceTest {
         updateRequest.setDescription("Updated Description for campaign.");
         updateRequest.setGoalAmount(new BigDecimal("6000.00"));
         updateRequest.setDeadline(LocalDate.now().plusMonths(4));
+        
+        campaignService = new CampaignServiceImpl(
+                campaignRepository,
+                fileStorageService,
+                metricsService
+        );
+        
+        // Only mock timer when needed in specific tests, not globally
     }
 
     @Test
     void shouldCreateCampaignWhenDataIsValid() {
         // Arrange
+        when(metricsService.startCampaignProcessingTimer()).thenReturn(timerSample);
+        
         Campaign campaign = new Campaign();
         campaign.setTitle("Help Orphans");
         campaign.setDescription("Supporting orphans with education and healthcare needs. This detailed description explains the campaign goals.");
@@ -90,14 +108,24 @@ class CampaignServiceTest {
         assertThat(result.getStatus()).isEqualTo(CampaignStatus.PENDING_VERIFICATION);
         assertThat(result.getUserId()).isEqualTo(userId);
         verify(campaignRepository, times(1)).save(any(Campaign.class));
+        verify(metricsService).startCampaignProcessingTimer();
+        verify(metricsService).incrementCampaignCreated();
+        verify(metricsService).recordCampaignProcessing(timerSample);
     }
 
     @Test
     void shouldThrowExceptionWhenDataIsInvalid() {
+        // Arrange
+        when(metricsService.startCampaignProcessingTimer()).thenReturn(timerSample);
+        
         // Act & Assert
         assertThrows(ValidationException.class, 
                 () -> campaignService.createCampaign(invalidRequest, userId));
         verify(campaignRepository, never()).save(any(Campaign.class));
+        
+        verify(metricsService).startCampaignProcessingTimer();
+        verify(metricsService).recordCampaignProcessing(timerSample);
+        verify(metricsService, never()).incrementCampaignCreated();
     }
     
     @Test
