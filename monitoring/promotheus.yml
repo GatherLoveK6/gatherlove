@@ -1,0 +1,26 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['prometheus:9090']
+
+  - job_name: 'gatherlove-app'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['gatherlove-app:8080']
+    scrape_timeout: 10s
+
+  - job_name: 'gatherlove-health'
+    metrics_path: '/actuator/health'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['gatherlove-app:8080']
+    scrape_timeout: 5s
