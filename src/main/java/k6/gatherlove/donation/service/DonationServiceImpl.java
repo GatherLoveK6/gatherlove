@@ -4,6 +4,7 @@ import k6.gatherlove.donation.client.WalletClient;
 import k6.gatherlove.donation.client.CampaignClient;
 import k6.gatherlove.donation.model.Donation;
 import k6.gatherlove.donation.repository.DonationRepository;
+import k6.gatherlove.service.MetricsService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,15 +18,18 @@ public class DonationServiceImpl implements DonationService {
     private final DonationRepository repo;
     private final WalletClient walletClient;
     private final CampaignClient campaignClient;
+    private final MetricsService metricsService;
 
     public DonationServiceImpl(
             DonationRepository repo,
             WalletClient walletClient,
-            CampaignClient campaignClient
+            CampaignClient campaignClient,
+            MetricsService metricsService
     ) {
         this.repo           = repo;
         this.walletClient   = walletClient;
         this.campaignClient = campaignClient;
+        this.metricsService = metricsService;
     }
 
     @Override
@@ -43,6 +47,8 @@ public class DonationServiceImpl implements DonationService {
         Donation saved = repo.save(donation);
 
         campaignClient.recordDonation(campaignId, saved.getId(), amount);
+        
+        metricsService.incrementDonationCreated();
 
         return saved;
     }
