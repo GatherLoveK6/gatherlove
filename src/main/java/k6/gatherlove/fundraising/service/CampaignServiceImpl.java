@@ -8,6 +8,8 @@ import k6.gatherlove.fundraising.model.Campaign;
 import k6.gatherlove.fundraising.model.CampaignStatus;
 import k6.gatherlove.fundraising.repository.CampaignRepository;
 import k6.gatherlove.fundraising.validator.CampaignValidator;
+import k6.gatherlove.service.MetricsService;
+import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,12 +27,22 @@ public class CampaignServiceImpl implements CampaignService {
     
     private final CampaignRepository campaignRepository;
     private final FileStorageService fileStorageService;
+    private final MetricsService metricsService;
     
     @Override
     public Campaign createCampaign(CampaignCreationRequest request, Long userId) {
-        CampaignValidator.validate(request);
-        Campaign campaign = CampaignFactory.createCampaign(request, userId);
-        return campaignRepository.save(campaign);
+        Timer.Sample sample = metricsService.startCampaignProcessingTimer();
+        
+        try {
+            CampaignValidator.validate(request);
+            Campaign campaign = CampaignFactory.createCampaign(request, userId);
+            Campaign saved = campaignRepository.save(campaign);
+            
+            metricsService.incrementCampaignCreated();
+            return saved;
+        } finally {
+            metricsService.recordCampaignProcessing(sample);
+        }
     }
     
     @Override
