@@ -72,6 +72,11 @@ jobs:
             # Navigate to project directory (assuming you have docker-compose.yml on EC2)
             cd /home/${{ secrets.EC2_USER }}/gatherlove || mkdir -p /home/${{ secrets.EC2_USER }}/gatherlove && cd /home/${{ secrets.EC2_USER }}/gatherlove
             
+            # Download docker-compose.yml if not exists
+            if [ ! -f docker-compose.yml ]; then
+              curl -O https://raw.githubusercontent.com/GatherLoveK6/gatherlove/refs/heads/main/docker-compose.yml
+            fi
+            
             # Set environment variable for Docker image
             export DOCKER_IMAGE=${{ secrets.DOCKER_HUB_USERNAME }}/gatherlove-app:latest
             
