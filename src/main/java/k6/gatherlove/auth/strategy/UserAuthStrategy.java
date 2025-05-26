@@ -4,6 +4,7 @@ import k6.gatherlove.auth.dto.RegisterUserRequest;
 import k6.gatherlove.auth.model.Role;
 import k6.gatherlove.auth.model.User;
 import k6.gatherlove.auth.repository.UserRepository;
+import k6.gatherlove.service.MetricsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import java.util.Set;
 public class UserAuthStrategy implements AuthStrategy {
 
     private final UserRepository userRepository;
+    private final MetricsService metricsService;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Override
@@ -43,6 +45,9 @@ public class UserAuthStrategy implements AuthStrategy {
                 .roles(Set.of(Role.ROLE_USER))
                 .build();
 
-        return userRepository.save(user);
+        User saved = userRepository.save(user);
+        metricsService.incrementUserRegistration();
+        
+        return saved;
     }
 }
